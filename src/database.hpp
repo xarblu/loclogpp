@@ -43,6 +43,11 @@ public:
      * Execute a query, error messages are printed to cerr
      */
     int execute(std::string query, int (*callback)(void*,int,char**,char**) = nullptr, void *callbackArg0 = nullptr);
+
+    /**
+     * Add a point to the DB
+     */
+    void addPoint(int timestamp, float latitude, float longitude, float velocity, float accuracy, float altitude);
 };
 
 } // namespace LocLogPP

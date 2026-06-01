@@ -6,6 +6,7 @@
 #include <string_view>
 #include <memory>
 #include <iostream>
+#include <format>
 
 std::unique_ptr<LocLogPP::Database> LocLogPP::Database::open(std::string path) {
     sqlite3 *rawDatabase;
@@ -121,4 +122,15 @@ int LocLogPP::Database::execute(std::string query, int (*callback)(void*,int,cha
     }
 
     return ret;
+}
+
+void LocLogPP::Database::addPoint(int timestamp, float latitude, float longitude, float velocity, float accuracy, float altitude) {
+    int ret = execute(std::format("INSERT INTO points VALUES (NULL, {}, {}, {}, {}, {}, {});",
+                                  timestamp, latitude, longitude, velocity, accuracy, altitude));
+
+    if (ret > 0) {
+        std::cerr << "Adding point failed\n";
+    } else {
+        std::cerr << "Successfully added point\n";
+    }
 }
