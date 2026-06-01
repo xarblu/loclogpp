@@ -10,6 +10,7 @@ std::unique_ptr<LocLogPP::Database> LocLogPP::Database::open(std::string path) {
     sqlite3 *database;
 
     if (sqlite3_open(path.c_str(), &database) != SQLITE_OK) {
+        std::cerr << "Opening database at " << path << " failed!\n";
         return nullptr;
     }
 
