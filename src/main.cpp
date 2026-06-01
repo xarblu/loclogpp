@@ -1,6 +1,13 @@
+#include "database.hpp"
+
 #include <iostream>
 
 int main(int argc, char* argv[]) {
-    std::cout << "Hello World\n";
+    auto db = LocLogPP::Database::open("./db.sqlite3");
+    if (!db) {
+        std::cerr << "Database init failed\n";
+        return 1;
+    }
+
     return 0;
 }

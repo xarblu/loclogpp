@@ -3,18 +3,26 @@
 #include <sqlite3.h>
 
 #include <string>
+#include <string_view>
 #include <memory>
 #include <iostream>
 
 std::unique_ptr<LocLogPP::Database> LocLogPP::Database::open(std::string path) {
-    sqlite3 *database;
+    sqlite3 *rawDatabase;
 
-    if (sqlite3_open(path.c_str(), &database) != SQLITE_OK) {
+    if (sqlite3_open(path.c_str(), &rawDatabase) != SQLITE_OK) {
         std::cerr << "Opening database at " << path << " failed!\n";
         return nullptr;
     }
 
-    return std::unique_ptr<Database>{new Database(database)};
+    auto database = std::unique_ptr<Database>{new Database(rawDatabase)};
+
+    if (auto ret = database->initialize(); ret > 0) {
+        std::cerr << "Database initialization failed!\n";
+        return nullptr;
+    }
+
+    return database;
 }
 
 LocLogPP::Database::~Database() {
@@ -23,4 +31,94 @@ LocLogPP::Database::~Database() {
             std::cerr << "Closing database failed!\n";
         }
     }
+}
+
+int LocLogPP::Database::initialize() {
+    int ret{0};
+    
+    bool hasSchema{false};
+    ret = execute("SELECT name FROM sqlite_master WHERE type='table' AND name='schema';", [](void* data, int valueCount, char **values, char **cols) -> int {
+        *static_cast<bool*>(data) = true;
+        return 0;
+    },
+    &hasSchema);
+    if (ret > 0) return ret;
+
+    if (!hasSchema) {
+        std::cerr << "Initializing new database\n";
+
+        // schema metadata
+        std::cerr << "Creating schema table\n";
+        ret = execute("CREATE TABLE IF NOT EXISTS schema (version INTEGER PRIMARY KEY);");
+        if (ret > 0) return ret;
+
+        ret = execute("INSERT INTO schema VALUES (0);");
+        if (ret > 0) return ret;
+    }
+
+    int version{-1};
+    ret = execute("SELECT version FROM schema;", [](void* data, int valueCount, char **values, char **cols) -> int {
+        *static_cast<int*>(data) = std::stoi(values[0]);
+        return 0;
+    },
+    &version);
+    if (ret > 0) return ret;
+
+    // actual schema
+    if (version < 1) {
+        std::cerr << "Beginning migration to schema version: 1\n";
+
+        ret = execute("BEGIN TRANSACTION;");
+        if (ret > 0) return ret;
+
+        /**
+         * Points table
+         * timestamp: unix timestamp
+         * latitude: coordinate
+         * longitude: coordinate
+         * velocity: m/s
+         * accuracy: m
+         * altitude: m
+         */
+        ret = execute("CREATE TABLE IF NOT EXISTS points (id INTEGER PRIMARY KEY, timestamp INTEGER, latitude REAL, longitude REAL, velocity REAL, accuracy REAL, altitude REAL);");
+        if (ret > 0) {
+            execute("ROLLBACK;");
+            return ret;
+        }
+
+        /**
+         * Uploads table
+         * id: point id from the points table
+         * timestamp: timestamp of the upload
+         */
+        ret = execute("CREATE TABLE IF NOT EXISTS uploads (id INTEGER, timestamp INTEGER, FOREIGN KEY(id) REFERENCES points(id));");
+        if (ret > 0) {
+            execute("ROLLBACK;");
+            return ret;
+        }
+
+        // bump version
+        ret = execute("UPDATE schema SET version = 1;");
+        if (ret > 0) {
+            execute("ROLLBACK;");
+            return ret;
+        }
+
+        ret = execute("COMMIT;");
+        if (ret > 0) return ret;
+    }
+
+    return 0;
+}
+
+int LocLogPP::Database::execute(std::string query, int (*callback)(void*,int,char**,char**), void *callbackArg0) {
+    char *errmsg;
+
+    int ret = sqlite3_exec(m_database, query.c_str(), callback, callbackArg0, &errmsg);
+    if (ret > 0) {
+        std::cerr << "SQLite3 error: " << std::string_view{errmsg} << "\n";
+        sqlite3_free(errmsg);
+    }
+
+    return ret;
 }
