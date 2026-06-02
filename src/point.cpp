@@ -5,13 +5,25 @@
 
 #include <string>
 #include <format>
+#include <iostream>
 
 std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
+    if (!(data.set & MODE_SET)) {
+        std::cerr << "fix.mode is required\n";
+        return std::nullopt;
+    }
+
+    if (data.fix.mode < MODE_2D) {
+        std::cerr << "fix.mode must be at least MODE_2D\n";
+        return std::nullopt;
+    }
+
     Point point{};
 
     if (data.set & TIME_SET) {
         point.m_timestamp = data.fix.time.tv_sec;
     } else {
+        std::cerr << "fix.time is required\n";
         return std::nullopt;
     }
 
@@ -19,6 +31,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
         point.m_latitude = data.fix.latitude;
         point.m_longitude = data.fix.longitude;
     } else {
+        std::cerr << "fix.latitude and fix.longitude are required\n";
         return std::nullopt;
     }
 

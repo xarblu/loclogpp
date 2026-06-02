@@ -9,17 +9,20 @@ int main(int argc, char* argv[]) {
         std::cerr << "Database init failed\n";
         return 1;
     }
+    std::cerr << "Database initialized\n";
 
     auto geolocator = LocLogPP::Geolocator::create();
     if (!geolocator) {
         std::cerr << "Geolocator init failed\n";
         return 1;
     }
+    std::cerr << "Geolocator initialized\n";
 
     auto point = geolocator->awaitPoint();
     if (point) {
         std::cout << "Got point:\n" << point->toString();
     } else {
+        std::cerr << "Got no point\n";
         return 1;
     }
 

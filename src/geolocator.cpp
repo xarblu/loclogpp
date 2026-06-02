@@ -36,7 +36,11 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() const {
         }
 
         if ((data = m_gps->read())) {
-            return Point::fromGPSD(*data);
+            if (auto point = Point::fromGPSD(*data)) {
+                return point;
+            } else {
+                std::cerr << "Ignoring GPSD without valid point data\n";
+            }
         } else {
             std::cerr << "GPSD read error\n";
             return std::nullopt;
