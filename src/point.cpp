@@ -14,8 +14,28 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
         return std::nullopt;
     }
 
+    std::cerr << "fix.mode is ";
+    switch (data.fix.mode) {
+        case MODE_NOT_SEEN:
+            std::cerr << "MODE_NOT_SEEN";
+            break;
+        case MODE_NO_FIX:
+            std::cerr << "MODE_NO_FIX";
+            break;
+        case MODE_2D:
+            std::cerr << "MODE_2D";
+            break;
+        case MODE_3D:
+            std::cerr << "MODE_3D";
+            break;
+        default:
+            std::cerr << "UNKNOWN";
+            break;
+    }
+    std::cerr << "\n";
+
     if (data.fix.mode < MODE_2D) {
-        std::cerr << "fix.mode must be at least MODE_2D\n";
+        std::cerr << "fix.mode must be at least MODE_2D\nGot: ";
         return std::nullopt;
     }
 

@@ -24,21 +24,21 @@ int main(int argc, char* argv[]) {
 
     while (true) {
         auto point = geolocator->awaitPoint();
-        if (point) {
-            std::cout << "Got point\n";
-            if (prevPoint) {
-                if (auto distance = prevPoint->distance(*point); distance < 5.0) {
-                    std::cerr << std::format("Distance to last point insufficient ({}m)\n", distance);
-                    continue;
-                }
-            }
-
-            db->addPoint(point.value());
-            prevPoint = point;
-        } else {
-            std::cerr << "Got no point\n";
-            continue;
+        if (!point) {
+            std::cerr << "Got no point\nAssuming GPSD connection died\n";
+            return 1;
         }
+
+        std::cout << "Got point\n";
+        if (prevPoint) {
+            if (auto distance = prevPoint->distance(*point); distance < 5.0) {
+                std::cerr << std::format("Distance to last point insufficient ({}m)\n", distance);
+                continue;
+            }
+        }
+
+        db->addPoint(point.value());
+        prevPoint = point;
     }
 
     return 0;
