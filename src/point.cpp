@@ -6,6 +6,7 @@
 #include <string>
 #include <format>
 #include <iostream>
+#include <cmath>
 
 std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
     if (!(data.set & MODE_SET)) {
@@ -52,6 +53,25 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
     }
 
     return point;
+}
+
+double LocLogPP::Point::distance(Point &other) {
+    constexpr double EARTH_RADIUS_METERS{6371000.0};
+
+    double latA = m_latitude * M_PI / 180.0;
+    double latB = other.latitude() * M_PI / 180.0;
+
+    double deltaLat = (m_latitude - other.latitude()) * M_PI / 180.0;
+    double deltaLon = (m_longitude - other.longitude()) * M_PI / 180.0;
+
+    double haversineLat = std::sin(deltaLat) * std::sin(deltaLat);
+    double haversineLon = std::sin(deltaLon) * std::sin(deltaLon);
+
+    double haversine = haversineLat + std::cos(latA) * std::cos(latB) * haversineLon;
+    
+    double distance = 2.0 * EARTH_RADIUS_METERS * std::atan2(std::sqrt(haversine), std::sqrt(1.0 - haversine));
+
+    return distance;
 }
 
 std::string LocLogPP::Point::toString() const {

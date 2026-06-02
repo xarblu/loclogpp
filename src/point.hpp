@@ -42,6 +42,12 @@ public:
     std::optional<float> altitude() const { return m_altitude; }
 
     /**
+     * Get the distance between this and another point
+     * using the haversine formula
+     */
+    double distance(Point &other);
+
+    /**
      * Convert to formatted string
      */
     std::string toString() const;
