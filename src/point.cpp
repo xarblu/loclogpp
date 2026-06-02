@@ -90,7 +90,7 @@ std::string LocLogPP::Point::toSQL() const {
     } else {
         sqlPoint += std::format(" NULL,");
     }
-    sqlPoint.pop_back();
+    sqlPoint.pop_back(); // remove trailing comma
     sqlPoint += ")";
 
     return sqlPoint;
