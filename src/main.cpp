@@ -30,6 +30,15 @@ int main(int argc, char* argv[]) {
         }
 
         std::cout << "Got point\n";
+        if (point->accuracy()) {
+            auto accuracy = point->accuracy().value();
+            if (accuracy > 1000.0) {
+                std::cerr << std::format("Point accuracy insufficient ({} m)\n", accuracy);
+                continue;
+            }
+            std::cerr << std::format("Point accuracy sufficient ({} m)\n", accuracy);
+        }
+
         if (prevPoint) {
             auto distance = prevPoint->distance(*point);
             if (distance < 5.0) {
