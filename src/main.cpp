@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        std::cout << "Got point\n";
+        std::cout << "Got point:\n" << point->toString();
         if (point->accuracy()) {
             auto accuracy = point->accuracy().value();
             if (accuracy > 1000.0) {

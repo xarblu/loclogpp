@@ -125,7 +125,7 @@ int LocLogPP::Database::execute(std::string query, int (*callback)(void*,int,cha
 }
 
 void LocLogPP::Database::addPoint(const Point &point) {
-    std::cerr << "Adding point to DB:\n" << point.toString();
+    std::cerr << "Adding point to DB\n";
 
     int ret = execute(std::format("INSERT INTO points VALUES {};", point.toSQL()));
 
