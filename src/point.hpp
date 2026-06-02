@@ -45,6 +45,13 @@ public:
      * Convert to formatted string
      */
     std::string toString() const;
+
+    /**
+     * Convert to a SQL tuple (including parenthesis)
+     *
+     * The first entry is always NULL for autoincrementing ID
+     */
+    std::string toSQL() const;
 };
 
 } // namespace LocLogPP

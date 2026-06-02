@@ -124,9 +124,10 @@ int LocLogPP::Database::execute(std::string query, int (*callback)(void*,int,cha
     return ret;
 }
 
-void LocLogPP::Database::addPoint(int timestamp, float latitude, float longitude, float speed, float accuracy, float altitude) {
-    int ret = execute(std::format("INSERT INTO points VALUES (NULL, {}, {}, {}, {}, {}, {});",
-                                  timestamp, latitude, longitude, speed, accuracy, altitude));
+void LocLogPP::Database::addPoint(const Point &point) {
+    std::cerr << "Adding point to DB:\n" << point.toString();
+
+    int ret = execute(std::format("INSERT INTO points VALUES {};", point.toSQL()));
 
     if (ret > 0) {
         std::cerr << "Adding point failed\n";

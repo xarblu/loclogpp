@@ -20,7 +20,8 @@ int main(int argc, char* argv[]) {
 
     auto point = geolocator->awaitPoint();
     if (point) {
-        std::cout << "Got point:\n" << point->toString();
+        std::cout << "Got point\n";
+        db->addPoint(point.value());
     } else {
         std::cerr << "Got no point\n";
         return 1;

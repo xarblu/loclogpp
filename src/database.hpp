@@ -1,5 +1,7 @@
 #pragma once
 
+#include "point.hpp"
+
 #include <sqlite3.h>
 
 #include <memory>
@@ -49,7 +51,7 @@ public:
     /**
      * Add a point to the DB
      */
-    void addPoint(int timestamp, float latitude, float longitude, float speed, float accuracy, float altitude);
+    void addPoint(const Point &point);
 };
 
 } // namespace LocLogPP

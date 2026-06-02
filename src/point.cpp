@@ -62,10 +62,36 @@ std::string LocLogPP::Point::toString() const {
         "altitude: {}\n" 
         "speed: {}\n"
         "accuracy: {}\n",
-        timestamp(),
-        latitude(),
-        longitude(),
-        altitude().value_or(NAN),
-        speed().value_or(NAN),
-        accuracy().value_or(NAN));
+        m_timestamp,
+        m_latitude,
+        m_longitude,
+        m_altitude.value_or(NAN),
+        m_speed.value_or(NAN),
+        m_accuracy.value_or(NAN));
+}
+
+std::string LocLogPP::Point::toSQL() const {
+    std::string sqlPoint{"(NULL,"};
+    sqlPoint += std::format(" {},", m_timestamp);
+    sqlPoint += std::format(" {},", m_latitude);
+    sqlPoint += std::format(" {},", m_longitude);
+    if (m_speed) {
+        sqlPoint += std::format(" {},", m_speed.value());
+    } else {
+        sqlPoint += std::format(" NULL,");
+    }
+    if (m_accuracy) {
+        sqlPoint += std::format(" {},", m_accuracy.value());
+    } else {
+        sqlPoint += std::format(" NULL,");
+    }
+    if (m_altitude) {
+        sqlPoint += std::format(" {},", m_altitude.value());
+    } else {
+        sqlPoint += std::format(" NULL,");
+    }
+    sqlPoint.pop_back();
+    sqlPoint += ")";
+
+    return sqlPoint;
 }
