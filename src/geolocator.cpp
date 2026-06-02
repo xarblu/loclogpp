@@ -26,10 +26,8 @@ std::unique_ptr<LocLogPP::Geolocator> LocLogPP::Geolocator::create(std::string h
 }
 
 std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() const {
-    gps_data_t *data;
-
     while (true) {
-        data = nullptr;
+        gps_data_t *data = nullptr;
 
         // waiting time in us (1s)
         // TODO: configurable?
@@ -38,11 +36,10 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() const {
         }
 
         if ((data = m_gps->read())) {
-            break;
+            return Point::fromGPSD(*data);
         } else {
             std::cerr << "GPSD read error\n";
+            return std::nullopt;
         }
     }
-
-    return Point::fromGPSD(*data);
 }
