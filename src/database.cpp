@@ -77,11 +77,11 @@ int LocLogPP::Database::initialize() {
          * timestamp: unix timestamp
          * latitude: coordinate
          * longitude: coordinate
-         * velocity: m/s
+         * speed: m/s
          * accuracy: m
          * altitude: m
          */
-        ret = execute("CREATE TABLE IF NOT EXISTS points (id INTEGER PRIMARY KEY, timestamp INTEGER, latitude REAL, longitude REAL, velocity REAL, accuracy REAL, altitude REAL);");
+        ret = execute("CREATE TABLE IF NOT EXISTS points (id INTEGER PRIMARY KEY, timestamp INTEGER, latitude REAL, longitude REAL, speed REAL, accuracy REAL, altitude REAL);");
         if (ret > 0) {
             execute("ROLLBACK;");
             return ret;
@@ -124,9 +124,9 @@ int LocLogPP::Database::execute(std::string query, int (*callback)(void*,int,cha
     return ret;
 }
 
-void LocLogPP::Database::addPoint(int timestamp, float latitude, float longitude, float velocity, float accuracy, float altitude) {
+void LocLogPP::Database::addPoint(int timestamp, float latitude, float longitude, float speed, float accuracy, float altitude) {
     int ret = execute(std::format("INSERT INTO points VALUES (NULL, {}, {}, {}, {}, {}, {});",
-                                  timestamp, latitude, longitude, velocity, accuracy, altitude));
+                                  timestamp, latitude, longitude, speed, accuracy, altitude));
 
     if (ret > 0) {
         std::cerr << "Adding point failed\n";

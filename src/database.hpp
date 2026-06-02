@@ -49,7 +49,7 @@ public:
     /**
      * Add a point to the DB
      */
-    void addPoint(int timestamp, float latitude, float longitude, float velocity, float accuracy, float altitude);
+    void addPoint(int timestamp, float latitude, float longitude, float speed, float accuracy, float altitude);
 };
 
 } // namespace LocLogPP
