@@ -31,10 +31,12 @@ int main(int argc, char* argv[]) {
 
         std::cout << "Got point\n";
         if (prevPoint) {
-            if (auto distance = prevPoint->distance(*point); distance < 5.0) {
-                std::cerr << std::format("Distance to last point insufficient ({}m)\n", distance);
+            auto distance = prevPoint->distance(*point);
+            if (distance < 5.0) {
+                std::cerr << std::format("Distance to last point insufficient ({} m)\n", distance);
                 continue;
             }
+            std::cerr << std::format("Distance to last point sufficient ({} m)\n", distance);
         }
 
         db->addPoint(point.value());

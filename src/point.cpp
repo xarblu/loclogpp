@@ -35,7 +35,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
     std::cerr << "\n";
 
     if (data.fix.mode < MODE_2D) {
-        std::cerr << "fix.mode must be at least MODE_2D\nGot: ";
+        std::cerr << "fix.mode must be at least MODE_2D\n";
         return std::nullopt;
     }
 
