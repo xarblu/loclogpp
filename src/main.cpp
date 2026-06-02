@@ -2,6 +2,7 @@
 #include "geolocator.hpp"
 
 #include <iostream>
+#include <format>
 
 int main(int argc, char* argv[]) {
     auto db = LocLogPP::Database::open("./db.sqlite3");
@@ -18,13 +19,26 @@ int main(int argc, char* argv[]) {
     }
     std::cerr << "Geolocator initialized\n";
 
-    auto point = geolocator->awaitPoint();
-    if (point) {
-        std::cout << "Got point\n";
-        db->addPoint(point.value());
-    } else {
-        std::cerr << "Got no point\n";
-        return 1;
+
+    std::optional<LocLogPP::Point> prevPoint{std::nullopt};
+
+    while (true) {
+        auto point = geolocator->awaitPoint();
+        if (point) {
+            std::cout << "Got point\n";
+            if (prevPoint) {
+                if (auto distance = prevPoint->distance(*point); distance < 5.0) {
+                    std::cerr << std::format("Distance to last point insufficient ({}m)\n", distance);
+                    continue;
+                }
+            }
+
+            db->addPoint(point.value());
+            prevPoint = point;
+        } else {
+            std::cerr << "Got no point\n";
+            continue;
+        }
     }
 
     return 0;
