@@ -1,41 +1,42 @@
 #include "point.hpp"
 
+#include "logger.hpp"
+
 #include <gps.h>
 #include <libgpsmm.h>
 
 #include <string>
 #include <format>
-#include <iostream>
 #include <cmath>
 
 std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
     if (!(data.set & MODE_SET)) {
-        std::cerr << "fix.mode is required\n";
+        Logger::warn("fix.mode is required");
         return std::nullopt;
     }
 
-    std::cerr << "fix.mode is ";
+    std::string fixModeStr;
     switch (data.fix.mode) {
         case MODE_NOT_SEEN:
-            std::cerr << "MODE_NOT_SEEN";
+            fixModeStr = "MODE_NOT_SEEN";
             break;
         case MODE_NO_FIX:
-            std::cerr << "MODE_NO_FIX";
+            fixModeStr = "MODE_NO_FIX";
             break;
         case MODE_2D:
-            std::cerr << "MODE_2D";
+            fixModeStr = "MODE_2D";
             break;
         case MODE_3D:
-            std::cerr << "MODE_3D";
+            fixModeStr = "MODE_3D";
             break;
         default:
-            std::cerr << "UNKNOWN";
+            fixModeStr = "UNKNOWN";
             break;
     }
-    std::cerr << "\n";
+    Logger::info("fix.mode is {}", fixModeStr);
 
     if (data.fix.mode < MODE_2D) {
-        std::cerr << "fix.mode must be at least MODE_2D\n";
+        Logger::warn("fix.mode must be at least MODE_2D");
         return std::nullopt;
     }
 
@@ -44,7 +45,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
     if (data.set & TIME_SET) {
         point.m_timestamp = data.fix.time.tv_sec;
     } else {
-        std::cerr << "fix.time is required\n";
+        Logger::warn("fix.time is required");
         return std::nullopt;
     }
 
@@ -52,7 +53,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
         point.m_latitude = data.fix.latitude;
         point.m_longitude = data.fix.longitude;
     } else {
-        std::cerr << "fix.latitude and fix.longitude are required\n";
+        Logger::warn("fix.latitude and fix.longitude are required");
         return std::nullopt;
     }
 
