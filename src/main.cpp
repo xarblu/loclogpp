@@ -1,32 +1,34 @@
 #include "database.hpp"
 #include "geolocator.hpp"
+#include "logger.hpp"
 
-#include <iostream>
-#include <format>
+#include <string>
+
+using namespace LocLogPP;
 
 int main(int argc, char* argv[]) {
-    auto db = LocLogPP::Database::open("./db.sqlite3");
+    auto db = Database::open("./db.sqlite3");
     if (!db) {
-        std::cerr << "Database init failed\n";
+        Logger::error("Database init failed");
         return 1;
     }
-    std::cerr << "Database initialized\n";
+    Logger::info("Database initialized");
 
     auto geolocator = LocLogPP::Geolocator::create();
     if (!geolocator) {
-        std::cerr << "Geolocator init failed\n";
+        Logger::error("Geolocator init failed");
         return 1;
     }
-    std::cerr << "Geolocator initialized\n";
+    Logger::info("Geolocator initialized");
 
     while (true) {
         auto point = geolocator->awaitPoint();
         if (!point) {
-            std::cerr << "Got no point\nAssuming GPSD connection died\n";
+            Logger::error("Got no point\nAssuming GPSD connection died");
             return 1;
         }
 
-        std::cout << "Got point:\n" << point->toString();
+        Logger::info("Got point:\n{}", point->toString());
         db->addPoint(point.value());
     }
 
