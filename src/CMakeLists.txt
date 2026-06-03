@@ -1,6 +1,7 @@
 add_executable(${PROJECT_NAME}
     database.cpp
     geolocator.cpp
+    logger.cpp
     main.cpp
     point.cpp
 )
