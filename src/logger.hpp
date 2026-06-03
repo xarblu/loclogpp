@@ -1,11 +1,12 @@
 #pragma once
 
-#include <format>
-#include <mutex>
-#include <utility>
-#include <type_traits>
 #include <chrono>
+#include <ctime>
+#include <format>
 #include <iostream>
+#include <mutex>
+#include <type_traits>
+#include <utility>
 
 
 namespace LocLogPP {
@@ -37,7 +38,19 @@ private:
      */
     template<class... Args>
     void logInternal(Priority priority, std::format_string<std::type_identity_t<Args>...> fmt, Args&&... args) {
-        std::string timestamp = std::format("[{:%F %T}] ", std::chrono::system_clock::now());
+        // std::localtime is not thread safe
+        // let's just lock the entire function
+        std::lock_guard lock{m_loggerMutex};
+
+        // time
+        std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        std::string timeStr{"[TIME ERROR] "};
+        std::array<char, 32> buffer{};
+        if (std::strftime(buffer.data(), buffer.size(), "[%F %T] ", std::localtime(&now)) > 0) {
+            timeStr = buffer.data();
+        }
+
+        // priority
         std::string priorityStr;
         switch (priority) {
             case Priority::DEBUG:
@@ -58,12 +71,11 @@ private:
                 break;
         }
 
+        // message
         std::string message = std::format(fmt, std::forward<Args>(args)...);
 
-        {
-            std::lock_guard lock{m_loggerMutex};
-            std::cerr << timestamp << priorityStr << message << "\n";
-        }
+        // send it
+        std::cerr << timeStr << priorityStr << message << "\n";
     }
 
 public:
