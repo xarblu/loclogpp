@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include <optional>
+#include <chrono>
 
 namespace LocLogPP {
 
@@ -24,6 +25,7 @@ class Geolocator {
     /**
      * Parameters
      */
+    int m_pointIntervalSeconds{5};
     double m_requiredAccuracyMeters{1000.0};
     double m_requiredDistanceMeters{5.0};
 
@@ -31,6 +33,7 @@ class Geolocator {
      * Last point returned by awaitPoint()
      */
     std::optional<Point> m_lastPoint{std::nullopt};
+    std::chrono::time_point<std::chrono::steady_clock> m_lastPointTime{};
 
     /**
      * Only allow creation with create()

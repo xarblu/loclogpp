@@ -10,6 +10,7 @@
 #include <format>
 #include <optional>
 #include <functional>
+#include <chrono>
 
 std::unique_ptr<LocLogPP::Geolocator> LocLogPP::Geolocator::create(std::string host, std::string port) {
     auto gps = std::make_unique<gpsmm>(host.c_str(), port.c_str());
@@ -60,24 +61,40 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() {
             continue;
         }
 
-        if ((data = m_gps->read())) {
-            auto point = Point::fromGPSD(*data);
-            if (!point) {
-                std::cerr << "Ignoring GPSD read without valid point data\n";
-                continue;
+        // this is our interval, while not exeeded
+        // just consume the GPSD data
+        auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - m_lastPointTime).count();
+        if (elapsedSeconds < m_pointIntervalSeconds) {
+            data = m_gps->read();
+            if (!data) {
+                std::cerr << "GPSD read error\n";
+                return std::nullopt;
             }
 
-            auto filtered = point.transform(std::bind(&LocLogPP::Geolocator::filterPoint, this, std::placeholders::_1));
-            if (!filtered) {
-                std::cerr << "Ignoring point due to filters\n";
-                continue;
-            }
+            continue;
+        }
 
-            m_lastPoint = point;
-            return point;
-        } else {
+        // actual data we care about
+        data = m_gps->read();
+        if (!data) {
             std::cerr << "GPSD read error\n";
             return std::nullopt;
         }
+
+        auto point = Point::fromGPSD(*data);
+        if (!point) {
+            std::cerr << "Ignoring GPSD read without valid point data\n";
+            continue;
+        }
+
+        auto filtered = point.transform(std::bind(&LocLogPP::Geolocator::filterPoint, this, std::placeholders::_1));
+        if (!filtered) {
+            std::cerr << "Ignoring point due to filters\n";
+            continue;
+        }
+
+        m_lastPoint = point;
+        m_lastPointTime = std::chrono::steady_clock::now();
+        return point;
     }
 }
