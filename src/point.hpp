@@ -1,6 +1,7 @@
 #pragma once
 
 #include <libgpsmm.h>
+#include <sqlite3.h>
 
 #include <cstdint>
 #include <optional>
@@ -30,6 +31,15 @@ public:
      * Returns nullopt if not all required values were available
      */
     static std::optional<Point> fromGPSD(gps_data_t &point);
+
+    /**
+     * Parse from a row of our SQL points table
+     * It is expected that the the statement was just advanced using sqlite3_step
+     * returning SQLITE_ROW
+     *
+     * Returns nullopt on error
+     */
+    static std::optional<Point> fromSQL(sqlite3_stmt *statement);
 
     /**
      * Getters

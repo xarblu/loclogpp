@@ -4,6 +4,7 @@
 
 #include <gps.h>
 #include <libgpsmm.h>
+#include <sqlite3.h>
 
 #include <string>
 #include <format>
@@ -71,6 +72,38 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
     if ((data.set & HERR_SET) && std::isfinite(data.fix.eph)) {
         // only horizontal accuracy for now
         point.m_accuracy = data.fix.eph;
+    }
+
+    return point;
+}
+
+std::optional<LocLogPP::Point> LocLogPP::Point::fromSQL(sqlite3_stmt *statement) {
+    if (!statement) [[unlikely]] {
+        Logger::warn("Point::fromSQL() received nullptr");
+        return std::nullopt;
+    }
+
+    // id INTEGER PRIMARY KEY,
+    // timestamp INTEGER,
+    // latitude REAL,
+    // longitude REAL,
+    // speed REAL,
+    // accuracy REAL,
+    // altitude REAL
+
+    Point point{};
+
+    point.m_timestamp = sqlite3_column_int64(statement, 1);
+    point.m_latitude = sqlite3_column_double(statement, 2);
+    point.m_longitude = sqlite3_column_double(statement, 3);
+    if (sqlite3_column_type(statement, 4) != SQLITE_NULL) {
+        point.m_speed = sqlite3_column_double(statement, 4);
+    }
+    if (sqlite3_column_type(statement, 5) != SQLITE_NULL) {
+        point.m_accuracy = sqlite3_column_double(statement, 5);
+    }
+    if (sqlite3_column_type(statement, 6) != SQLITE_NULL) {
+        point.m_altitude = sqlite3_column_double(statement, 6);
     }
 
     return point;

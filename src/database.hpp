@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace LocLogPP {
 
@@ -52,6 +53,11 @@ public:
      * Add a point to the DB
      */
     void addPoint(const Point &point);
+
+    /**
+     * Retrieve points from the database
+     */
+    std::vector<Point> getPoints() const;
 };
 
 } // namespace LocLogPP

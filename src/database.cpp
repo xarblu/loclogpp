@@ -7,8 +7,8 @@
 #include <string>
 #include <string_view>
 #include <memory>
-#include <iostream>
 #include <format>
+#include <vector>
 
 std::unique_ptr<LocLogPP::Database> LocLogPP::Database::open(std::string path) {
     sqlite3 *rawDatabase;
@@ -136,4 +136,27 @@ void LocLogPP::Database::addPoint(const Point &point) {
     } else {
         Logger::info("Successfully added point");
     }
+}
+
+std::vector<LocLogPP::Point> LocLogPP::Database::getPoints() const {
+    auto statement = std::unique_ptr<sqlite3_stmt, decltype([](sqlite3_stmt *stmt) { sqlite3_finalize(stmt); })>{nullptr};
+
+    int ret;
+    std::vector<Point> points{};
+
+    const char* query = "SELECT * FROM points;";
+    ret = sqlite3_prepare_v2(m_database, query, -1, std::out_ptr(statement), NULL);
+    if (ret != SQLITE_OK) {
+        Logger::error("SQLite3 error while preparing \"{}\": {}", query, ret);
+        return points;
+    }
+
+    while (sqlite3_step(statement.get()) == SQLITE_ROW) {
+        auto point = Point::fromSQL(statement.get());
+        if (point) {
+            points.emplace_back(std::move(point.value()));
+        }
+    }
+
+    return points;
 }

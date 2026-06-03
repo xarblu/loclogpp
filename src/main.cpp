@@ -21,6 +21,12 @@ int main(int argc, char* argv[]) {
     }
     Logger::info("Geolocator initialized");
 
+    auto points = db->getPoints();
+    Logger::info("Database contains {} points", points.size());
+    if (!points.empty()) {
+        Logger::info("Last point:\n{}", points.back().toString());
+    }
+
     while (true) {
         auto point = geolocator->awaitPoint();
         if (!point) {
