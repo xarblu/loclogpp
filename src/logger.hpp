@@ -56,15 +56,14 @@ private:
             default:
                 priorityStr = "[UNKNOWN] ";
                 break;
-    }
+        }
 
-    std::string message = std::format(fmt, std::forward<Args>(args)...);
+        std::string message = std::format(fmt, std::forward<Args>(args)...);
 
-    {
-        std::lock_guard lock{m_loggerMutex};
-        std::cerr << timestamp << priorityStr << message << "\n";
-    }
-
+        {
+            std::lock_guard lock{m_loggerMutex};
+            std::cerr << timestamp << priorityStr << message << "\n";
+        }
     }
 
 public:
