@@ -54,7 +54,9 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() {
     while (true) {
         gps_data_t *data = nullptr;
 
-        if (!m_gps->waiting(m_pointIntervalMicroSeconds)) {
+        // this is not really a point interval,
+        // just a timeout for "is data available yet?"
+        if (!m_gps->waiting(5000000)) {
             continue;
         }
 

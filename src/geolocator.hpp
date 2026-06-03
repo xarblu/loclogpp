@@ -24,7 +24,6 @@ class Geolocator {
     /**
      * Parameters
      */
-    int m_pointIntervalMicroSeconds{1000000};
     double m_requiredAccuracyMeters{1000.0};
     double m_requiredDistanceMeters{5.0};
 
