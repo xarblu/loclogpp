@@ -81,13 +81,13 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() {
             return std::nullopt;
         }
 
-        auto point = Point::fromGPSD(*data);
+        std::optional<Point> point = Point::fromGPSD(*data);
         if (!point) {
             std::cerr << "Ignoring GPSD read without valid point data\n";
             continue;
         }
 
-        auto filtered = point.transform(std::bind(&LocLogPP::Geolocator::filterPoint, this, std::placeholders::_1));
+        std::optional<Point> filtered = point.and_then(std::bind(&LocLogPP::Geolocator::filterPoint, this, std::placeholders::_1));
         if (!filtered) {
             std::cerr << "Ignoring point due to filters\n";
             continue;
