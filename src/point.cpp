@@ -135,7 +135,7 @@ std::string LocLogPP::Point::toString() const {
         "longitude: {}\n"
         "altitude: {}\n" 
         "speed: {}\n"
-        "accuracy: {}\n",
+        "accuracy: {}",
         m_timestamp,
         m_latitude,
         m_longitude,
