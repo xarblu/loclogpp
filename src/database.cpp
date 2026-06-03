@@ -1,5 +1,7 @@
 #include "database.hpp"
 
+#include "logger.hpp"
+
 #include <sqlite3.h>
 
 #include <string>
@@ -12,14 +14,14 @@ std::unique_ptr<LocLogPP::Database> LocLogPP::Database::open(std::string path) {
     sqlite3 *rawDatabase;
 
     if (sqlite3_open(path.c_str(), &rawDatabase) != SQLITE_OK) {
-        std::cerr << "Opening database at " << path << " failed!\n";
+        Logger::error("Opening database at {} failed!", path);
         return nullptr;
     }
 
     auto database = std::unique_ptr<Database>{new Database(rawDatabase)};
 
     if (auto ret = database->initialize(); ret > 0) {
-        std::cerr << "Database initialization failed!\n";
+        Logger::error("Database initialization failed!");
         return nullptr;
     }
 
@@ -29,7 +31,7 @@ std::unique_ptr<LocLogPP::Database> LocLogPP::Database::open(std::string path) {
 LocLogPP::Database::~Database() {
     if (m_database) {
         if (sqlite3_close(m_database) != SQLITE_OK) {
-            std::cerr << "Closing database failed!\n";
+            Logger::error("Closing database failed!");
         }
     }
 }
@@ -46,10 +48,10 @@ int LocLogPP::Database::initialize() {
     if (ret > 0) return ret;
 
     if (!hasSchema) {
-        std::cerr << "Initializing new database\n";
+        Logger::info("Initializing new database");
 
         // schema metadata
-        std::cerr << "Creating schema table\n";
+        Logger::info("Creating schema table");
         ret = execute("CREATE TABLE IF NOT EXISTS schema (version INTEGER PRIMARY KEY);");
         if (ret > 0) return ret;
 
@@ -67,7 +69,7 @@ int LocLogPP::Database::initialize() {
 
     // actual schema
     if (version < 1) {
-        std::cerr << "Beginning migration to schema version: 1\n";
+        Logger::info("Beginning migration to schema version: 1");
 
         ret = execute("BEGIN TRANSACTION;");
         if (ret > 0) return ret;
@@ -117,7 +119,7 @@ int LocLogPP::Database::execute(std::string query, int (*callback)(void*,int,cha
 
     int ret = sqlite3_exec(m_database, query.c_str(), callback, callbackArg0, &errmsg);
     if (ret > 0) {
-        std::cerr << "SQLite3 error: " << std::string_view{errmsg} << "\n";
+        Logger::error("SQLite3 error: {}", std::string_view{errmsg});
         sqlite3_free(errmsg);
     }
 
@@ -125,13 +127,13 @@ int LocLogPP::Database::execute(std::string query, int (*callback)(void*,int,cha
 }
 
 void LocLogPP::Database::addPoint(const Point &point) {
-    std::cerr << "Adding point to DB\n";
+    Logger::info("Adding point to DB");
 
     int ret = execute(std::format("INSERT INTO points VALUES {};", point.toSQL()));
 
     if (ret > 0) {
-        std::cerr << "Adding point failed\n";
+        Logger::error("Adding point failed");
     } else {
-        std::cerr << "Successfully added point\n";
+        Logger::info("Successfully added point");
     }
 }
