@@ -45,7 +45,7 @@ public:
      * Get the distance between this and another point
      * using the haversine formula
      */
-    double distance(Point &other);
+    double distance(const Point &other) const;
 
     /**
      * Convert to formatted string

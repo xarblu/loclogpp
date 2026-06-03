@@ -19,9 +19,6 @@ int main(int argc, char* argv[]) {
     }
     std::cerr << "Geolocator initialized\n";
 
-
-    std::optional<LocLogPP::Point> prevPoint{std::nullopt};
-
     while (true) {
         auto point = geolocator->awaitPoint();
         if (!point) {
@@ -30,26 +27,7 @@ int main(int argc, char* argv[]) {
         }
 
         std::cout << "Got point:\n" << point->toString();
-        if (point->accuracy()) {
-            auto accuracy = point->accuracy().value();
-            if (accuracy > 1000.0) {
-                std::cerr << std::format("Point accuracy insufficient ({} m)\n", accuracy);
-                continue;
-            }
-            std::cerr << std::format("Point accuracy sufficient ({} m)\n", accuracy);
-        }
-
-        if (prevPoint) {
-            auto distance = prevPoint->distance(*point);
-            if (distance < 5.0) {
-                std::cerr << std::format("Distance to last point insufficient ({} m)\n", distance);
-                continue;
-            }
-            std::cerr << std::format("Distance to last point sufficient ({} m)\n", distance);
-        }
-
         db->addPoint(point.value());
-        prevPoint = point;
     }
 
     return 0;

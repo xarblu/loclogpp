@@ -75,7 +75,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
     return point;
 }
 
-double LocLogPP::Point::distance(Point &other) {
+double LocLogPP::Point::distance(const Point &other) const {
     constexpr double EARTH_RADIUS_METERS{6371000.0};
 
     double latA = m_latitude * M_PI / 180.0;

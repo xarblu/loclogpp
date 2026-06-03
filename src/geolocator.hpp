@@ -21,11 +21,33 @@ class Geolocator {
     std::string m_host{};
     std::string m_port{};
 
+    /**
+     * Parameters
+     */
+    int m_pointIntervalMicroSeconds{1000000};
+    double m_requiredAccuracyMeters{1000.0};
+    double m_requiredDistanceMeters{5.0};
+
+    /**
+     * Last point returned by awaitPoint()
+     */
+    std::optional<Point> m_lastPoint{std::nullopt};
+
+    /**
+     * Only allow creation with create()
+     */
     explicit Geolocator(std::unique_ptr<gpsmm> &&gps, std::string &&host, std::string &&port)
         : m_gps{std::move(gps)}
         , m_host{std::move(host)}
         , m_port{std::move(port)}
     {}
+
+    /**
+     * Apply point filters
+     * 
+     * Returns nullopt if filtered, else the original point
+     */
+    std::optional<Point> filterPoint(Point point) const;
 
 public:
     /**
@@ -46,7 +68,7 @@ public:
     /**
      * Await the next point and get a pointer to it
      */
-    std::optional<Point> awaitPoint() const;
+    std::optional<Point> awaitPoint();
 };
 
 } // namespace LocLogPP
