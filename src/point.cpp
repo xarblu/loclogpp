@@ -48,7 +48,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
         return std::nullopt;
     }
 
-    if (data.set & LATLON_SET) {
+    if ((data.set & LATLON_SET) && std::isfinite(data.fix.latitude) && std::isfinite(data.fix.longitude)) {
         point.m_latitude = data.fix.latitude;
         point.m_longitude = data.fix.longitude;
     } else {
@@ -56,18 +56,18 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
         return std::nullopt;
     }
 
-    if (data.set & ALTITUDE_SET) {
+    if ((data.set & ALTITUDE_SET) && std::isfinite(data.fix.altMSL)) {
         // altidude above mean sea level
         // this is what Owntracks uses as well
         // https://owntracks.org/booklet/tech/json/#_typelocation
         point.m_altitude = data.fix.altMSL;
     }
 
-    if (data.set & SPEED_SET) {
+    if ((data.set & SPEED_SET) && std::isfinite(data.fix.speed)) {
         point.m_speed = data.fix.speed;
     }
 
-    if (data.set & HERR_SET) {
+    if ((data.set & HERR_SET) && std::isfinite(data.fix.eph)) {
         // only horizontal accuracy for now
         point.m_accuracy = data.fix.eph;
     }
