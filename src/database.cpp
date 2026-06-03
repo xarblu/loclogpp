@@ -151,11 +151,18 @@ std::vector<LocLogPP::Point> LocLogPP::Database::getPoints() const {
         return points;
     }
 
+    uint failed{0};
     while (sqlite3_step(statement.get()) == SQLITE_ROW) {
         auto point = Point::fromSQL(statement.get());
-        if (point) {
-            points.emplace_back(std::move(point.value()));
+        if (!point) [[unlikely]] {
+            failed++;
+            continue;
         }
+        points.emplace_back(std::move(point.value()));
+    }
+
+    if (failed > 0) {
+        Logger::warn("Failed to parse {} points from DB", failed);
     }
 
     return points;
