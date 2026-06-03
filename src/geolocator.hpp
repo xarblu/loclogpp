@@ -65,7 +65,9 @@ public:
     void operator=(Geolocator &other) = delete;
 
     /**
-     * Await the next point and get a pointer to it
+     * Await the next point
+     *
+     * Returns nullopt on GPSD read error
      */
     std::optional<Point> awaitPoint();
 };
