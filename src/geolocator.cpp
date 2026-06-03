@@ -1,12 +1,12 @@
 #include "geolocator.hpp"
 
 #include "point.hpp"
+#include "logger.hpp"
 
 #include <gps.h>
 #include <libgpsmm.h>
 
 #include <memory>
-#include <iostream>
 #include <format>
 #include <optional>
 #include <functional>
@@ -15,12 +15,12 @@
 std::unique_ptr<LocLogPP::Geolocator> LocLogPP::Geolocator::create(std::string host, std::string port) {
     auto gps = std::make_unique<gpsmm>(host.c_str(), port.c_str());
     if (!gps->is_open()) {
-        std::cerr << std::format("Could not connect to GPSD at {}:{}\n", host, port);
+        Logger::error("Could not connect to GPSD at {}:{}", host, port);
         return nullptr;
     }
 
     if (gps->stream(WATCH_ENABLE|WATCH_JSON) == NULL) {
-        std::cerr << std::format("Could not enable streaming on GPSD at {}:{}\n", host, port);
+        Logger::error("Could not enable streaming on GPSD at {}:{}", host, port);
         return nullptr;
     }
 
@@ -28,24 +28,24 @@ std::unique_ptr<LocLogPP::Geolocator> LocLogPP::Geolocator::create(std::string h
 }
 
 std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) const {
-    std::cerr << "Applying point filter\n";
+    Logger::debug("Applying point filter");
 
     if (point.accuracy()) {
         auto accuracy = point.accuracy().value();
         if (accuracy > m_requiredAccuracyMeters) {
-            std::cerr << std::format("Point accuracy insufficient ({} m)\n", accuracy);
+            Logger::debug("Point accuracy insufficient ({} m)", accuracy);
             return std::nullopt;
         }
-        std::cerr << std::format("Point accuracy sufficient ({} m)\n", accuracy);
+        Logger::debug("Point accuracy sufficient ({} m)", accuracy);
     }
 
     if (m_lastPoint) {
         auto distance = m_lastPoint->distance(point);
         if (distance < m_requiredDistanceMeters) {
-            std::cerr << std::format("Distance to last point insufficient ({} m)\n", distance);
+            Logger::debug("Distance to last point insufficient ({} m)", distance);
             return std::nullopt;
         }
-        std::cerr << std::format("Distance to last point sufficient ({} m)\n", distance);
+        Logger::debug("Distance to last point sufficient ({} m)", distance);
     }
 
     return point;
@@ -67,7 +67,7 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() {
         if (elapsedSeconds < m_pointIntervalSeconds) {
             data = m_gps->read();
             if (!data) {
-                std::cerr << "GPSD read error\n";
+                Logger::error("GPSD read error");
                 return std::nullopt;
             }
 
@@ -77,19 +77,19 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() {
         // actual data we care about
         data = m_gps->read();
         if (!data) {
-            std::cerr << "GPSD read error\n";
+            Logger::error("GPSD read error");
             return std::nullopt;
         }
 
         std::optional<Point> point = Point::fromGPSD(*data);
         if (!point) {
-            std::cerr << "Ignoring GPSD read without valid point data\n";
+            Logger::debug("Ignoring GPSD read without valid point data");
             continue;
         }
 
         std::optional<Point> filtered = point.and_then(std::bind(&LocLogPP::Geolocator::filterPoint, this, std::placeholders::_1));
         if (!filtered) {
-            std::cerr << "Ignoring point due to filters\n";
+            Logger::debug("Ignoring point due to filters");
             continue;
         }
 
