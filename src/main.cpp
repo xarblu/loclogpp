@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
 
     switch (args->operation()) {
         case Operation::TRACK: {
-            auto geolocator = LocLogPP::Geolocator::create();
+            auto geolocator = LocLogPP::Geolocator::create(args);
             if (!geolocator) {
                 Logger::error("Geolocator init failed");
                 return 1;

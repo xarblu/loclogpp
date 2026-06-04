@@ -1,5 +1,7 @@
 #pragma once
 
+#include <libgpsmm.h>
+
 #include <memory>
 #include <string>
 
@@ -15,8 +17,16 @@ enum class Operation {
 };
 
 class ArgParser {
+    // global
     Operation m_operation{};
     std::string m_dbFile{"./db.sqlite3"};
+
+    // track
+    std::string m_gpsdHost{"localhost"};
+    std::string m_gpsdPort{DEFAULT_GPSD_PORT};
+    int m_pointIntervalSeconds{5};
+    double m_requiredAccuracyMeters{200.0};
+    double m_requiredDistanceMeters{5.0};
 
     /**
      * Print help message
@@ -33,13 +43,18 @@ public:
      * Error: {>0, nullptr}
      * No Op (--help): {0, nullptr}
      */
-    static std::pair<int, std::unique_ptr<ArgParser>> parse(int argc, char* argv[]);
+    static std::pair<int, std::shared_ptr<ArgParser>> parse(int argc, char* argv[]);
 
     /**
      * Getters
      */
     Operation operation() const { return m_operation; }
     std::string dbFile() const { return m_dbFile; }
+    std::string gpsdHost() const { return m_gpsdHost; };
+    std::string gpsdPort() const { return m_gpsdPort; };
+    int pointIntervalSeconds() const { return m_pointIntervalSeconds; }
+    double requiredAccuracyMeters() const { return m_requiredAccuracyMeters; }
+    double requiredDistanceMeters() const { return m_requiredDistanceMeters; }
 };
 
 } //namespace LocLogPP

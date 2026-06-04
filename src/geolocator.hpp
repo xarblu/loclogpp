@@ -1,5 +1,6 @@
 #pragma once
 
+#include "argparser.hpp"
 #include "point.hpp"
 
 #include <libgpsmm.h>
@@ -15,19 +16,11 @@ class Geolocator {
     std::unique_ptr<gpsmm> m_gps{nullptr};
 
     /**
-     * host and port need to outlive gpsmm
-     * because it'll keep a pointer to the contained
-     * c_str
-     */
-    std::string m_host{};
-    std::string m_port{};
-
-    /**
      * Parameters
      */
-    int m_pointIntervalSeconds{5};
-    double m_requiredAccuracyMeters{1000.0};
-    double m_requiredDistanceMeters{5.0};
+    std::shared_ptr<ArgParser> m_args;
+    std::string m_host{};
+    std::string m_port{};
 
     /**
      * Last point returned by awaitPoint()
@@ -38,11 +31,7 @@ class Geolocator {
     /**
      * Only allow creation with create()
      */
-    explicit Geolocator(std::unique_ptr<gpsmm> &&gps, std::string &&host, std::string &&port)
-        : m_gps{std::move(gps)}
-        , m_host{std::move(host)}
-        , m_port{std::move(port)}
-    {}
+    Geolocator() = default;
 
     /**
      * Apply point filters
@@ -54,12 +43,12 @@ class Geolocator {
 public:
     /**
      * Create a Geolocator
-     * Connects to the given GPSD host+port (or default)
+     * Connects to the given GPSD host+port
      * and enables streaming
      *
      * nullptr on error
      */
-    static std::unique_ptr<Geolocator> create(std::string host = "localhost", std::string port = DEFAULT_GPSD_PORT);
+    static std::unique_ptr<Geolocator> create(std::shared_ptr<ArgParser> args);
 
     /**
      * No copying
