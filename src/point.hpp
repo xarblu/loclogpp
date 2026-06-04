@@ -68,6 +68,11 @@ public:
      * The first entry is always NULL for autoincrementing ID
      */
     std::string toSQL() const;
+
+    /**
+     * Convert to GPX trkpt
+     */
+    std::string toGPX() const;
 };
 
 } // namespace LocLogPP

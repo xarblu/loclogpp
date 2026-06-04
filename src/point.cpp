@@ -9,6 +9,14 @@
 #include <string>
 #include <format>
 #include <cmath>
+#include <sstream>
+#include <cstdint>
+#include <chrono>
+
+static inline std::string unixSecondsToISO8601UTC(std::int64_t unixSeconds) {
+    std::chrono::system_clock::time_point tp{std::chrono::seconds{unixSeconds}};
+    return std::format("{:%FT%TZ}", tp);
+}
 
 std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
     if (!(data.set & MODE_SET)) {
@@ -168,4 +176,20 @@ std::string LocLogPP::Point::toSQL() const {
     sqlPoint += ")";
 
     return sqlPoint;
+}
+
+std::string LocLogPP::Point::toGPX() const {
+    std::stringstream gpx{};
+
+    gpx << "      <trkpt lat=\"" << m_latitude << "\" lon=\"" << m_longitude << "\">\n";
+    if (m_altitude) {
+        gpx << "        <ele>" << m_altitude.value() << "</ele>\n";
+    }
+    if (m_speed) {
+        gpx << "        <speed>" << m_speed.value() << "</speed>\n";
+    }
+    gpx << "        <time>" << unixSecondsToISO8601UTC(m_timestamp) << "</time>\n";
+    gpx << "      </trkpt>\n";
+
+    return std::move(gpx.str());
 }
