@@ -4,6 +4,7 @@
 #include "exporter.hpp"
 #include "argparser.hpp"
 
+#include <memory>
 #include <thread>
 #include <chrono>
 
@@ -25,18 +26,19 @@ int main(int argc, char* argv[]) {
 
     switch (args->operation()) {
         case Operation::TRACK: {
-            auto geolocator = LocLogPP::Geolocator::create(args);
-            if (!geolocator) {
-                Logger::error("Geolocator init failed");
-                return 1;
-            }
-            Logger::info("Geolocator initialized");
-
             auto points = db->getPoints();
             Logger::info("Database contains {} points", points.size());
             if (!points.empty()) {
                 Logger::info("Last point:\n{}", points.back().toString());
             }
+
+            std::unique_ptr<Geolocator> geolocator{nullptr};
+            while (!(geolocator = LocLogPP::Geolocator::create(args))) {
+                Logger::error("Geolocator init failed");
+                Logger::warn("Retrying in 5s");
+                std::this_thread::sleep_for(std::chrono::seconds{5});
+            }
+            Logger::info("Geolocator initialized");
 
             while (true) {
                 auto point = geolocator->awaitPoint();
@@ -44,6 +46,7 @@ int main(int argc, char* argv[]) {
                     Logger::error("Got no point - assuming GPSD connection died");
                     Logger::warn("Re-creating Geolocator");
                     while (!(geolocator = LocLogPP::Geolocator::create(args))) {
+                        Logger::error("Geolocator init failed");
                         Logger::warn("Retrying in 5s");
                         std::this_thread::sleep_for(std::chrono::seconds{5});
                     }
