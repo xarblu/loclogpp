@@ -57,12 +57,23 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
     }
 
     if (m_lastPoint) {
+        auto requiredDistance = m_args->requiredDistanceMeters();
+
+        // add some penalty for point inaccuracy
+        // to avoid excessive jumping in low accuracy scenarios
+        if (auto accuracy = m_lastPoint->accuracy()) {
+            requiredDistance += accuracy.value() / 2.0;
+        }
+        if (auto accuracy = point.accuracy()) {
+            requiredDistance += accuracy.value() / 2.0;
+        }
+
         auto distance = m_lastPoint->distance(point);
-        if (distance < m_args->requiredDistanceMeters()) {
-            Logger::debug("Distance to last point insufficient ({} m)", distance);
+        if (distance < requiredDistance) {
+            Logger::debug("Distance to last point insufficient ({} m, required {} m)", distance, requiredDistance);
             return std::nullopt;
         }
-        Logger::debug("Distance to last point sufficient ({} m)", distance);
+        Logger::debug("Distance to last point sufficient ({} m, required {})", distance, requiredDistance);
     }
 
     return point;
