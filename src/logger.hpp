@@ -4,20 +4,24 @@
 #include <ctime>
 #include <format>
 #include <iostream>
+#include <memory>
 #include <mutex>
+#include <optional>
 #include <type_traits>
 #include <utility>
 
-
 namespace LocLogPP {
+
+class ArgParser;
 
 class Logger {
 public:
+    // some syslog style levels
     enum class Priority {
-        DEBUG,
-        INFO,
-        WARN,
-        ERROR,
+        DEBUG = 7,
+        INFO = 6,
+        WARN = 4,
+        ERROR = 3,
     };
 
 private:
@@ -26,6 +30,8 @@ private:
 
     std::mutex m_loggerMutex{};
 
+    std::shared_ptr<ArgParser> m_args{nullptr};
+
     /**
      * Get pointer to the logger singleton
      * Will create it if necessary
@@ -33,11 +39,21 @@ private:
     static Logger* instance();
 
     /**
+     * Check whether we should print this mesage according to
+     * configured priority
+     */
+    bool shouldPrint(Priority priority) const;
+
+    /**
      * Internal log printer
      * Ensures synchronised output
      */
     template<class... Args>
     void logInternal(Priority priority, std::format_string<std::type_identity_t<Args>...> fmt, Args&&... args) {
+        if (!shouldPrint(priority)) {
+            return;
+        }
+
         // std::localtime is not thread safe
         // let's just lock the entire function
         std::lock_guard lock{m_loggerMutex};
@@ -80,6 +96,11 @@ private:
 
 public:
     /**
+     * Attach the shared config to the Logger singleton
+     */
+    static void attachConfig(std::shared_ptr<ArgParser> args);
+
+    /**
      * Generic log function
      */
     template<class... Args>
@@ -102,6 +123,13 @@ public:
 
     template<class... Args>
     static inline void error(std::format_string<std::type_identity_t<Args>...> fmt, Args&&... args) { log(Priority::ERROR, fmt, std::forward<Args>(args)...); }
+
+    /**
+     * Log level string<->enum conversions helpers
+     * priorityFromString returns nullopt on error
+     */
+    static std::optional<Priority> priorityFromString(const std::string &priorityStr);
+    static std::string priorityToString(Priority priority);
 };
 
 } // namespace LocLogPP

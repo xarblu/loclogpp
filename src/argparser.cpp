@@ -15,6 +15,7 @@ void LocLogPP::ArgParser::printHelp() {
               << "GLOBAL_OPTs:\n"
               << "  -h|--help            Print this help message\n"
               << "  -d|--db-file         SQLite3 database file (default: " << defaults.dbFile() << ")\n"
+              << "  -l|--log-level       Log level [DEBUG,INFO,WARN,ERROR] (default: " << Logger::priorityToString(defaults.logLevel()) << ")\n"
               << "\n"
               << "OPERATIONs:\n"
               << "  track                Run the tracker\n"
@@ -55,6 +56,20 @@ std::pair<int, std::shared_ptr<LocLogPP::ArgParser>> LocLogPP::ArgParser::parse(
                 return {1, nullptr};
             }
             parser->m_dbFile = argv[++i];
+            continue;
+        }
+
+        if (arg == "-l" || arg == "--log-level") {
+            if (i + 1 >= argc) {
+                Logger::error("Argument requires value: {}", arg);
+                return {1, nullptr};
+            }
+            auto level = Logger::priorityFromString(argv[++i]);
+            if (!level) {
+                Logger::error("Invalid value for: {}", arg);
+                return {1, nullptr};
+            }
+            parser->m_logLevel = level.value();
             continue;
         }
 

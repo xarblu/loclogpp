@@ -16,6 +16,8 @@ int main(int argc, char* argv[]) {
         return ret;
     }
 
+    Logger::attachConfig(args);
+
     auto db = Database::open(args->dbFile());
     if (!db) {
         Logger::error("Database init failed");

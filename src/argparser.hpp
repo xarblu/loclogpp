@@ -1,5 +1,7 @@
 #pragma once
 
+#include "logger.hpp"
+
 #include <libgpsmm.h>
 
 #include <memory>
@@ -20,6 +22,7 @@ class ArgParser {
     // global
     Operation m_operation{};
     std::string m_dbFile{"./db.sqlite3"};
+    Logger::Priority m_logLevel{Logger::Priority::INFO};
 
     // track
     std::string m_gpsdHost{"localhost"};
@@ -50,6 +53,7 @@ public:
      */
     Operation operation() const { return m_operation; }
     std::string dbFile() const { return m_dbFile; }
+    Logger::Priority logLevel() const { return m_logLevel; }
     std::string gpsdHost() const { return m_gpsdHost; };
     std::string gpsdPort() const { return m_gpsdPort; };
     int pointIntervalSeconds() const { return m_pointIntervalSeconds; }
