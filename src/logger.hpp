@@ -9,6 +9,7 @@
 #include <optional>
 #include <type_traits>
 #include <utility>
+#include <sstream>
 
 namespace LocLogPP {
 
@@ -59,7 +60,7 @@ private:
         std::lock_guard lock{m_loggerMutex};
 
         // time
-        std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        const std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         std::string timeStr{"[TIME ERROR] "};
         std::array<char, 32> buffer{};
         if (std::strftime(buffer.data(), buffer.size(), "[%F %T] ", std::localtime(&now)) > 0) {
@@ -87,11 +88,25 @@ private:
                 break;
         }
 
-        // message
-        std::string message = std::format(fmt, std::forward<Args>(args)...);
+        const size_t prefixLen{timeStr.size() + priorityStr.size()};
+
+        // message, indented by the prefix
+        std::istringstream messageStream{};
+        messageStream.str(std::format(fmt, std::forward<Args>(args)...));
+
+        std::stringstream message{};
+        bool first{true};
+        for (std::string line; std::getline(messageStream, line);) {
+            if (first) {
+                message << line << "\n";
+                first = false;
+                continue;
+            }
+            message << std::string(prefixLen, ' ') << line << "\n";
+        }
 
         // send it
-        std::cerr << timeStr << priorityStr << message << "\n";
+        std::cerr << timeStr << priorityStr << std::move(message.str());
     }
 
 public:
