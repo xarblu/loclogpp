@@ -4,6 +4,8 @@
 #include "exporter.hpp"
 #include "argparser.hpp"
 
+#include <thread>
+#include <chrono>
 
 using namespace LocLogPP;
 
@@ -39,8 +41,13 @@ int main(int argc, char* argv[]) {
             while (true) {
                 auto point = geolocator->awaitPoint();
                 if (!point) {
-                    Logger::error("Got no point\nAssuming GPSD connection died");
-                    return 1;
+                    Logger::error("Got no point - assuming GPSD connection died");
+                    Logger::warn("Re-creating Geolocator");
+                    while (!(geolocator = LocLogPP::Geolocator::create(args))) {
+                        Logger::warn("Retrying in 5s");
+                        std::this_thread::sleep_for(std::chrono::seconds{5});
+                    }
+                    continue;
                 }
 
                 Logger::info("Got point:\n{}", point->toString());
