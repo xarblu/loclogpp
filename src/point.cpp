@@ -42,7 +42,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
             fixModeStr = "UNKNOWN";
             break;
     }
-    Logger::info("fix.mode is {}", fixModeStr);
+    Logger::debug("fix.mode is {}", fixModeStr);
 
     if (data.fix.mode < MODE_2D) {
         Logger::warn("fix.mode must be at least MODE_2D");
