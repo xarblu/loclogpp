@@ -20,7 +20,7 @@ static inline std::string unixSecondsToISO8601UTC(std::int64_t unixSeconds) {
 
 std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
     if (!(data.set & MODE_SET)) {
-        Logger::warn("fix.mode is required");
+        Logger::debug("fix.mode is required");
         return std::nullopt;
     }
 
@@ -45,7 +45,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
     Logger::debug("fix.mode is {}", fixModeStr);
 
     if (data.fix.mode < MODE_2D) {
-        Logger::warn("fix.mode must be at least MODE_2D");
+        Logger::debug("fix.mode must be at least MODE_2D");
         return std::nullopt;
     }
 
@@ -54,7 +54,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
     if (data.set & TIME_SET) {
         point.m_timestamp = data.fix.time.tv_sec;
     } else {
-        Logger::warn("fix.time is required");
+        Logger::debug("fix.time is required");
         return std::nullopt;
     }
 
@@ -62,7 +62,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
         point.m_latitude = data.fix.latitude;
         point.m_longitude = data.fix.longitude;
     } else {
-        Logger::warn("fix.latitude and fix.longitude are required");
+        Logger::debug("fix.latitude and fix.longitude are required");
         return std::nullopt;
     }
 
