@@ -50,10 +50,10 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
     if (point.accuracy()) {
         auto accuracy = point.accuracy().value();
         if (accuracy > m_args->requiredAccuracyMeters()) {
-            Logger::debug("Point accuracy insufficient ({:.3} m)", accuracy);
+            Logger::debug("Point accuracy insufficient ({:.3f} m)", accuracy);
             return std::nullopt;
         }
-        Logger::debug("Point accuracy sufficient ({:.3} m)", accuracy);
+        Logger::debug("Point accuracy sufficient ({:.3f} m)", accuracy);
     }
 
     if (m_lastPoint) {
@@ -70,10 +70,10 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
 
         auto distance = m_lastPoint->distance(point);
         if (distance < requiredDistance) {
-            Logger::debug("Distance to last point insufficient ({:.3} m, required {:.3} m)", distance, requiredDistance);
+            Logger::debug("Distance to last point insufficient ({:.3f} m, required {:.3f} m)", distance, requiredDistance);
             return std::nullopt;
         }
-        Logger::debug("Distance to last point sufficient ({:.3} m, required {:.3})", distance, requiredDistance);
+        Logger::debug("Distance to last point sufficient ({:.3f} m, required {:.3f})", distance, requiredDistance);
     }
 
     return point;
