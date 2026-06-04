@@ -4,7 +4,7 @@ name="LocLogPP"
 description="Location Logger in C++"
 
 command="/usr/local/bin/loclogpp"
-command_args="${LOCLOGPP_GLOBAL_ARGS} track ${LOCLOGPP_TRACK_ARGS}"
+command_args="--syslog ${LOCLOGPP_GLOBAL_ARGS} track ${LOCLOGPP_TRACK_ARGS}"
 command_background="true"
 
 pidfile=/var/run/loclogpp.pid
