@@ -27,3 +27,4 @@ message(STATUS "Using LIBGPS:  ${LIBGPS_VERSION}")
 message(STATUS "---------------------------------")
 
 add_subdirectory(src)
+add_subdirectory(meta)
