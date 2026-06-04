@@ -1,4 +1,5 @@
 add_executable(${PROJECT_NAME}
+    argparser.cpp
     database.cpp
     exporter.cpp
     geolocator.cpp
