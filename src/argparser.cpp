@@ -10,11 +10,12 @@ void LocLogPP::ArgParser::printHelp() {
     std::cerr << "Usage: loclogpp {GLOBAL_OPT...} OPERATION {OPERATION_OPT...}\n"
               << "\n"
               << "GLOBAL_OPTs:\n"
-              << "  -h|--help  Print this help message\n"
+              << "  -h|--help     Print this help message\n"
+              << "  -d|--db-file  SQLite3 database file\n"
               << "\n"
               << "OPERATIONs:\n"
-              << "  track      Run the tracker\n"
-              << "  export     Export collected points\n"
+              << "  track         Run the tracker\n"
+              << "  export        Export collected points\n"
               << "\n"
               << "OPERATION_OPTs for track:\n"
               << "\n"
@@ -39,6 +40,15 @@ std::pair<int, std::unique_ptr<LocLogPP::ArgParser>> LocLogPP::ArgParser::parse(
         if (arg == "-h" || arg == "--help") {
             printHelp();
             return {0, nullptr};
+        }
+
+        if (arg == "-d" || arg == "--db-file") {
+            if (i + 1 >= argc) {
+                Logger::error("Argument requires value: {}", arg);
+                return {1, nullptr};
+            }
+            parser->m_dbFile = argv[++i];
+            continue;
         }
 
         Logger::error("Unknown GLOBAL_OPT: {}", arg);

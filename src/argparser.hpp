@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 namespace LocLogPP {
 
@@ -15,6 +16,7 @@ enum class Operation {
 
 class ArgParser {
     Operation m_operation{};
+    std::string m_dbFile{"./db.sqlite3"};
 
     /**
      * Print help message
@@ -37,6 +39,7 @@ public:
      * Getters
      */
     Operation operation() const { return m_operation; }
+    std::string dbFile() const { return m_dbFile; }
 };
 
 } //namespace LocLogPP

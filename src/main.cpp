@@ -4,8 +4,6 @@
 #include "exporter.hpp"
 #include "argparser.hpp"
 
-#include <string>
-#include <string>
 
 using namespace LocLogPP;
 
@@ -15,7 +13,7 @@ int main(int argc, char* argv[]) {
         return ret;
     }
 
-    auto db = Database::open("./db.sqlite3");
+    auto db = Database::open(args->dbFile());
     if (!db) {
         Logger::error("Database init failed");
         return 1;
