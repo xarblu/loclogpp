@@ -23,6 +23,7 @@ class ArgParser {
     Operation m_operation{};
     std::string m_dbFile{"./db.sqlite3"};
     Logger::Priority m_logLevel{Logger::Priority::INFO};
+    bool m_useSyslogPrefix{false};
 
     // track
     std::string m_gpsdHost{"localhost"};
@@ -54,6 +55,7 @@ public:
     Operation operation() const { return m_operation; }
     std::string dbFile() const { return m_dbFile; }
     Logger::Priority logLevel() const { return m_logLevel; }
+    bool useSyslogPrefix() const { return m_useSyslogPrefix; }
     std::string gpsdHost() const { return m_gpsdHost; };
     std::string gpsdPort() const { return m_gpsdPort; };
     int pointIntervalSeconds() const { return m_pointIntervalSeconds; }

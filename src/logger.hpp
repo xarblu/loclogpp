@@ -46,6 +46,16 @@ private:
     bool shouldPrint(Priority priority) const;
 
     /**
+     * Create the prefix for the log message
+     */
+    std::string logPrefix(Priority priority) const;
+
+    /**
+     * Indent the message (except the first line) to match prefix
+     */
+    std::string indentMessage(std::string &&message, size_t indent) const;
+
+    /**
      * Internal log printer
      * Ensures synchronised output
      */
@@ -59,54 +69,11 @@ private:
         // let's just lock the entire function
         std::lock_guard lock{m_loggerMutex};
 
-        // time
-        const std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        std::string timeStr{"[TIME ERROR] "};
-        std::array<char, 32> buffer{};
-        if (std::strftime(buffer.data(), buffer.size(), "[%F %T] ", std::localtime(&now)) > 0) {
-            timeStr = buffer.data();
-        }
-
-        // priority
-        std::string priorityStr;
-        switch (priority) {
-            case Priority::DEBUG:
-                priorityStr = "[DEBUG] ";
-                break;
-
-            case Priority::INFO:
-                priorityStr = "[INFO] ";
-                break;
-            case Priority::WARN:
-                priorityStr = "[WARN] ";
-                break;
-            case Priority::ERROR:
-                priorityStr = "[ERROR] ";
-                break;
-            default:
-                priorityStr = "[UNKNOWN] ";
-                break;
-        }
-
-        const size_t prefixLen{timeStr.size() + priorityStr.size()};
-
-        // message, indented by the prefix
-        std::istringstream messageStream{};
-        messageStream.str(std::format(fmt, std::forward<Args>(args)...));
-
-        std::stringstream message{};
-        bool first{true};
-        for (std::string line; std::getline(messageStream, line);) {
-            if (first) {
-                message << line << "\n";
-                first = false;
-                continue;
-            }
-            message << std::string(prefixLen, ' ') << line << "\n";
-        }
+        const auto prefix = logPrefix(priority);
+        const auto message = indentMessage(std::format(fmt, std::forward<Args>(args)...), prefix.size());
 
         // send it
-        std::cerr << timeStr << priorityStr << std::move(message.str());
+        std::cerr << prefix << message;
     }
 
 public:

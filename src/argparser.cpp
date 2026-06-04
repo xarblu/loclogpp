@@ -16,6 +16,7 @@ void LocLogPP::ArgParser::printHelp() {
               << "  -h|--help            Print this help message\n"
               << "  -d|--db-file         SQLite3 database file (default: " << defaults.dbFile() << ")\n"
               << "  -l|--log-level       Log level [DEBUG,INFO,WARN,ERROR] (default: " << Logger::priorityToString(defaults.logLevel()) << ")\n"
+              << "  --syslog             Enable syslog compatible prio-prefixes (<prio>Message) instead of our own\n"
               << "\n"
               << "OPERATIONs:\n"
               << "  track                Run the tracker\n"
@@ -70,6 +71,11 @@ std::pair<int, std::shared_ptr<LocLogPP::ArgParser>> LocLogPP::ArgParser::parse(
                 return {1, nullptr};
             }
             parser->m_logLevel = level.value();
+            continue;
+        }
+
+        if (arg == "--syslog") {
+            parser->m_useSyslogPrefix = true;
             continue;
         }
 

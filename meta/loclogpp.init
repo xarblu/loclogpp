@@ -10,7 +10,7 @@ command_background="true"
 pidfile=/var/run/loclogpp.pid
 
 # loclogpp logs everything to stderr
-error_log=/var/log/loclogpp.log
+error_logger="logger -t loclogpp --prio-prefix"
 
 depend() {
     need gpsd
