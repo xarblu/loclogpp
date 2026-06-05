@@ -124,7 +124,7 @@ void LocLogPP::Geolocator::evaluateMode(LocLogPP::Point &point) {
     const Point center{0, static_cast<float>(latMean), static_cast<float>(lonMean)};
 
     // if any point exceeds this we are moving
-    constexpr double stationaryRadius{10};
+    constexpr double stationaryRadius{10.0};
 
     State state = State::STATIONARY;
     for (const auto &point : m_pastPoints) {
