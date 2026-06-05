@@ -28,7 +28,7 @@ bool LocLogPP::Logger::shouldPrint(LocLogPP::Logger::Priority priority) const {
 }
 
 std::string LocLogPP::Logger::logPrefix(LocLogPP::Logger::Priority priority) const {
-    if (m_args->useSyslogPrefix()) {
+    if (m_args && m_args->useSyslogPrefix()) {
         return std::format("<{}>", static_cast<int>(priority));
     }
 
@@ -65,7 +65,7 @@ std::string LocLogPP::Logger::logPrefix(LocLogPP::Logger::Priority priority) con
 }
 
 std::string LocLogPP::Logger::indentMessage(std::string &&message, size_t indent) const {
-    if (m_args->useSyslogPrefix()) {
+    if (m_args && m_args->useSyslogPrefix()) {
         return std::move(message) + "\n";
     }
 
