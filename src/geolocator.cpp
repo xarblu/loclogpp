@@ -68,8 +68,8 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
         // This is mostly just an issue when stationary so maybe
         // speed should affect this as well (low speed -> require higher distance)
         // but then afaik speed is mostly just generated on-the-fly by fix distance / fix time
-        auto accuracyLast = m_lastPoint->accuracy();
-        auto accuracyCurr = point.accuracy();
+        const auto accuracyLast = m_lastPoint->accuracy();
+        const auto accuracyCurr = point.accuracy();
         if (accuracyLast && accuracyCurr) {
             requiredDistance += accuracyLast.value() + accuracyCurr.value();
         } else if (accuracyLast) {
@@ -78,7 +78,7 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
             requiredDistance += 2.0 * accuracyCurr.value();
         }
 
-        auto distance = m_lastPoint->distance(point);
+        const auto distance = m_lastPoint->distance(point);
         if (distance < requiredDistance) {
             Logger::debug("Distance to last point insufficient ({:.3f} m, required {:.3f} m)", distance, requiredDistance);
             return std::nullopt;
