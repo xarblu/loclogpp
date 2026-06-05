@@ -107,81 +107,81 @@ std::pair<int, std::shared_ptr<LocLogPP::ArgParser>> LocLogPP::ArgParser::parse(
     i++;
 
     // operation specific flags
-    switch (parser->operation()) {
-        case Operation::TRACK: {
-            for (; i < argc; i++) {
-                auto arg = std::string_view{argv[i]};
+    for (; i < argc; i++) {
+        switch (parser->operation()) {
+            case Operation::TRACK:
+                {
+                    auto arg = std::string_view{argv[i]};
 
-                if (arg == "--gpsd-host") {
-                    if (i + 1 >= argc) {
-                        Logger::error("Argument requires value: {}", arg);
-                        return {1, nullptr};
-                    }
-                    parser->m_gpsdHost = argv[++i];
-                    continue;
-                }
-
-                if (arg == "--gpsd-port") {
-                    if (i + 1 >= argc) {
-                        Logger::error("Argument requires value: {}", arg);
-                        return {1, nullptr};
-                    }
-                    parser->m_gpsdHost = argv[++i];
-                    continue;
-                }
-
-                if (arg == "--point-interval") {
-                    if (i + 1 >= argc) {
-                        Logger::error("Argument requires value: {}", arg);
-                        return {1, nullptr};
-                    }
-                    try {
-                        parser->m_pointIntervalSeconds = std::stoi(std::string{argv[++i]});
+                    if (arg == "--gpsd-host") {
+                        if (i + 1 >= argc) {
+                            Logger::error("Argument requires value: {}", arg);
+                            return {1, nullptr};
+                        }
+                        parser->m_gpsdHost = argv[++i];
                         continue;
-                    } catch(std::invalid_argument e) {
-                        Logger::error("Bad interger value for: {}", arg);
-                        return {1, nullptr};
                     }
-                }
 
-                if (arg == "--required-accuracy") {
-                    if (i + 1 >= argc) {
-                        Logger::error("Argument requires value: {}", arg);
-                        return {1, nullptr};
-                    }
-                    try {
-                        parser->m_requiredAccuracyMeters = std::stod(std::string{argv[++i]});
+                    if (arg == "--gpsd-port") {
+                        if (i + 1 >= argc) {
+                            Logger::error("Argument requires value: {}", arg);
+                            return {1, nullptr};
+                        }
+                        parser->m_gpsdHost = argv[++i];
                         continue;
-                    } catch(std::invalid_argument e) {
-                        Logger::error("Bad float value for: {}", arg);
-                        return {1, nullptr};
                     }
-                }
 
-                if (arg == "--required-distance") {
-                    if (i + 1 >= argc) {
-                        Logger::error("Argument requires value: {}", arg);
-                        return {1, nullptr};
+                    if (arg == "--point-interval") {
+                        if (i + 1 >= argc) {
+                            Logger::error("Argument requires value: {}", arg);
+                            return {1, nullptr};
+                        }
+                        try {
+                            parser->m_pointIntervalSeconds = std::stoi(std::string{argv[++i]});
+                            continue;
+                        } catch(std::invalid_argument e) {
+                            Logger::error("Bad interger value for: {}", arg);
+                            return {1, nullptr};
+                        }
                     }
-                    try {
-                        parser->m_requiredDistanceMeters = std::stod(std::string{argv[++i]});
-                        continue;
-                    } catch(std::invalid_argument e) {
-                        Logger::error("Bad float value for: {}", arg);
-                        return {1, nullptr};
-                    }
-                }
 
-                Logger::error("Unknown OPERATION_OPT: {}", arg);
+                    if (arg == "--required-accuracy") {
+                        if (i + 1 >= argc) {
+                            Logger::error("Argument requires value: {}", arg);
+                            return {1, nullptr};
+                        }
+                        try {
+                            parser->m_requiredAccuracyMeters = std::stod(std::string{argv[++i]});
+                            continue;
+                        } catch(std::invalid_argument e) {
+                            Logger::error("Bad float value for: {}", arg);
+                            return {1, nullptr};
+                        }
+                    }
+
+                    if (arg == "--required-distance") {
+                        if (i + 1 >= argc) {
+                            Logger::error("Argument requires value: {}", arg);
+                            return {1, nullptr};
+                        }
+                        try {
+                            parser->m_requiredDistanceMeters = std::stod(std::string{argv[++i]});
+                            continue;
+                        } catch(std::invalid_argument e) {
+                            Logger::error("Bad float value for: {}", arg);
+                            return {1, nullptr};
+                        }
+                    }
+
+                    Logger::error("Unknown OPERATION_OPT: {}", arg);
+                    return {1, nullptr};
+                }
+                break;
+
+            default:
+                Logger::error("Given OPERATION does not take any OPERATION_OPTs");
                 return {1, nullptr};
-            }
-
-            break;
         }
-
-        default:
-            Logger::error("Given OPERATION does not take any OPERATION_OPTs");
-            return {1, nullptr};
     }
 
     return {0, std::move(parser)};
