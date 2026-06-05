@@ -9,10 +9,19 @@
 #include <string>
 #include <optional>
 #include <chrono>
+#include <deque>
 
 namespace LocLogPP {
 
 class Geolocator {
+public:
+    enum class State {
+        STATIONARY,
+        MOVING,
+    };
+
+private:
+
     std::unique_ptr<gpsmm> m_gps{nullptr};
 
     /**
@@ -29,6 +38,16 @@ class Geolocator {
     std::chrono::time_point<std::chrono::steady_clock> m_lastPointTime{};
 
     /**
+     * Past received points used to determine stationary/moving state
+     */
+    std::deque<Point> m_pastPoints{};
+
+    /**
+     * Current detected state
+     */
+    State m_state{State::MOVING};
+
+    /**
      * Only allow creation with create()
      */
     Geolocator() = default;
@@ -39,6 +58,11 @@ class Geolocator {
      * Returns nullopt if filtered, else the original point
      */
     std::optional<Point> filterPoint(Point point) const;
+
+    /**
+     * Store copy of the point and evaluate mode
+     */
+    void evaluateMode(Point &point);
 
 public:
     /**

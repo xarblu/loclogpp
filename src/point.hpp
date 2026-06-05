@@ -17,10 +17,22 @@ class Point {
     std::optional<float> m_accuracy{std::nullopt};
     std::optional<float> m_altitude{std::nullopt};
 
-    // only allow construction via helpers
+    // only allow default construction via helpers
     Point() = default;
 
 public:
+    /**
+     * Public constructor only with all valid params
+     */
+    explicit Point(std::int64_t timestamp, float latitude, float longitude, std::optional<float> speed = std::nullopt, std::optional<float> accuracy = std::nullopt, std::optional<float> altitude = std::nullopt)
+        : m_timestamp{timestamp}
+        , m_latitude{latitude}
+        , m_longitude{longitude}
+        , m_speed{speed}
+        , m_accuracy{accuracy}
+        , m_altitude{altitude}
+    {}
+
     /**
      * Parse from GPSD point
      * Required values:
