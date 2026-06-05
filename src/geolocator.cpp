@@ -59,13 +59,16 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
     if (m_lastPoint) {
         auto requiredDistance = m_args->requiredDistanceMeters();
 
-        // add some penalty for point inaccuracy
+        // add penalty for point inaccuracy
         // to avoid excessive jumping in low accuracy scenarios
-        if (auto accuracy = m_lastPoint->accuracy()) {
-            requiredDistance += accuracy.value() / 2.0;
-        }
-        if (auto accuracy = point.accuracy()) {
-            requiredDistance += accuracy.value() / 2.0;
+        auto accuracyLast = m_lastPoint->accuracy();
+        auto accuracyCurr = point.accuracy();
+        if (accuracyLast && accuracyCurr) {
+            requiredDistance += accuracyLast.value() + accuracyCurr.value();
+        } else if (accuracyLast) {
+            requiredDistance += 2.0 * accuracyLast.value();
+        } else if (accuracyCurr) {
+            requiredDistance += 2.0 * accuracyCurr.value();
         }
 
         auto distance = m_lastPoint->distance(point);
