@@ -61,6 +61,13 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
 
         // add penalty for point inaccuracy
         // to avoid excessive jumping in low accuracy scenarios
+        //
+        // Assuming point A has 10m and point B has 20m the total
+        // distance required is 30m + config which is probably fine(?)
+        //
+        // This is mostly just an issue when stationary so maybe
+        // speed should affect this as well (low speed -> require higher distance)
+        // but then afaik speed is mostly just generated on-the-fly by fix distance / fix time
         auto accuracyLast = m_lastPoint->accuracy();
         auto accuracyCurr = point.accuracy();
         if (accuracyLast && accuracyCurr) {
