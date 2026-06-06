@@ -144,38 +144,62 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::pastPointsCenter() const {
 }
 
 void LocLogPP::Geolocator::evaluateMode(LocLogPP::Point &point) {
+    // We detect movement by calculating the center of the
+    // older 50% and the newer 50% of recent points.
+    // If these clusters are more than stationaryDistance
+    // apart we enter MOVING state, else STATIONARY
+
+    // threshold of cluster distance before going MOVING
+    constexpr double stationaryDistance{10.0};
+
+    // amount of points to keep for evaluation
+    constexpr size_t evalPointsRequired{10};
+    constexpr size_t evalPointsMax{50};
+
+    // manage points
     m_pastPoints.push_back(point);
-
-    // past points used
-    constexpr size_t evalPoints{10};
-
-    if (m_pastPoints.size() < evalPoints) {
-        Logger::debug("Not enough points for mode evaluation (have {} need {})", m_pastPoints.size(), evalPoints);
+    if (m_pastPoints.size() < evalPointsRequired) {
+        Logger::debug("Not enough points for mode evaluation (have {} need {})", m_pastPoints.size(), evalPointsRequired);
         return;
     }
 
-    while (m_pastPoints.size() > evalPoints) {
+    while (m_pastPoints.size() > evalPointsMax) {
         m_pastPoints.pop_front();
     }
 
-    // If the past evalPoints never left
-    // a certain radius around their center
-    // we'll enter stationary mode
+    
+    // older cluster
+    double oldHalfLat{0.0};
+    double oldHalfLon{0.0};
 
-    // we ensured m_pastPoints isn't empty so this will
-    // never be nullopt
-    const Point center = pastPointsCenter().value();
-
-    // if any point exceeds this we are moving
-    constexpr double stationaryRadius{10.0};
-
-    State state = State::STATIONARY;
-    for (const auto &point : m_pastPoints) {
-        if (point.distance(center) > stationaryRadius) {
-            state = State::MOVING;
-            break;
-        }
+    for (auto it = m_pastPoints.begin(); it != m_pastPoints.begin() + m_pastPoints.size() / 2; it++) {
+        oldHalfLat += it->latitude();
+        oldHalfLon += it->longitude();
     }
+
+    const double oldHalfLatMean{oldHalfLat / (m_pastPoints.size() / 2.0)};
+    const double oldHalfLonMean{oldHalfLon / (m_pastPoints.size() / 2.0)};
+
+    const Point oldHalfCenter{0, static_cast<float>(oldHalfLat), static_cast<float>(oldHalfLon)};
+
+    // newer cluster
+    double newHalfLat{0.0};
+    double newHalfLon{0.0};
+
+    for (auto it = m_pastPoints.begin() + m_pastPoints.size() / 2; it != m_pastPoints.end(); it++) {
+        newHalfLat += it->latitude();
+        newHalfLon += it->longitude();
+    }
+
+    const double newHalfLatMean{newHalfLat / (m_pastPoints.size() / 2.0)};
+    const double newHalfLonMean{newHalfLon / (m_pastPoints.size() / 2.0)};
+
+    const Point newHalfCenter{0, static_cast<float>(newHalfLat), static_cast<float>(newHalfLon)};
+
+    // set state
+    State state = (oldHalfCenter.distance(newHalfCenter) < stationaryDistance)
+        ? State::STATIONARY 
+        : State::MOVING;
 
     if (m_state != state) {
         Logger::info("State changed: {}", stateToString(state));
