@@ -12,6 +12,7 @@
 #include <optional>
 #include <functional>
 #include <chrono>
+#include <cmath>
 
 static inline std::string stateToString(LocLogPP::Geolocator::State state) {
     switch (state) {
@@ -171,28 +172,32 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     // older cluster
     double oldHalfLat{0.0};
     double oldHalfLon{0.0};
+    int oldCount{0};
 
     for (auto it = m_pastPoints.begin(); it != m_pastPoints.begin() + m_pastPoints.size() / 2; it++) {
         oldHalfLat += it->latitude();
         oldHalfLon += it->longitude();
+        oldCount += 1;
     }
 
-    const double oldHalfLatMean{oldHalfLat / (m_pastPoints.size() / 2.0)};
-    const double oldHalfLonMean{oldHalfLon / (m_pastPoints.size() / 2.0)};
+    const double oldHalfLatMean{oldHalfLat / oldCount};
+    const double oldHalfLonMean{oldHalfLon / oldCount};
 
     const Point oldHalfCenter{0, static_cast<float>(oldHalfLat), static_cast<float>(oldHalfLon)};
 
     // newer cluster
     double newHalfLat{0.0};
     double newHalfLon{0.0};
+    int newCount{0};
 
     for (auto it = m_pastPoints.begin() + m_pastPoints.size() / 2; it != m_pastPoints.end(); it++) {
         newHalfLat += it->latitude();
         newHalfLon += it->longitude();
+        newCount += 1;
     }
 
-    const double newHalfLatMean{newHalfLat / (m_pastPoints.size() / 2.0)};
-    const double newHalfLonMean{newHalfLon / (m_pastPoints.size() / 2.0)};
+    const double newHalfLatMean{newHalfLat / newCount};
+    const double newHalfLonMean{newHalfLon / newCount};
 
     const Point newHalfCenter{0, static_cast<float>(newHalfLat), static_cast<float>(newHalfLon)};
 
