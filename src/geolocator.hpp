@@ -45,7 +45,7 @@ private:
     /**
      * Current detected state
      */
-    State m_state{State::MOVING};
+    State m_state{State::STATIONARY};
 
     /**
      * Only allow creation with create()
