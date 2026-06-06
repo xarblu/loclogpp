@@ -203,8 +203,8 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
 
     const double distance = oldCenter.distance(newCenter);
 
-    Logger::debug("Center of old cluster: {}", oldCenter.toString());
-    Logger::debug("Center of new cluster: {}", newCenter.toString());
+    Logger::debug("Center of old cluster:\n{}", oldCenter.toString());
+    Logger::debug("Center of new cluster:\n{}", newCenter.toString());
     Logger::debug("Distance: {:.3f} m", distance);
 
     // set state
