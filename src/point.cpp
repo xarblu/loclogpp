@@ -126,8 +126,8 @@ double LocLogPP::Point::distance(const Point &other) const {
     double deltaLat = (m_latitude - other.latitude()) * M_PI / 180.0;
     double deltaLon = (m_longitude - other.longitude()) * M_PI / 180.0;
 
-    double haversineLat = std::sin(deltaLat) * std::sin(deltaLat);
-    double haversineLon = std::sin(deltaLon) * std::sin(deltaLon);
+    double haversineLat = std::sin(deltaLat / 2.0) * std::sin(deltaLat / 2.0);
+    double haversineLon = std::sin(deltaLon / 2.0) * std::sin(deltaLon / 2.0);
 
     double haversine = haversineLat + std::cos(latA) * std::cos(latB) * haversineLon;
     
