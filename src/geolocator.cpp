@@ -66,23 +66,9 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
     }
 
     if (m_lastPoint) {
-        auto requiredDistance = m_args->requiredDistanceMeters();
-
-        // (stationary only) add penalty for point inaccuracy
-        // to avoid excessive jumping in low accuracy scenarios
-        if (m_state == State::STATIONARY) {
-            const auto accuracyLast = m_lastPoint->accuracy();
-            const auto accuracyCurr = point.accuracy();
-            if (accuracyLast && accuracyCurr) {
-                requiredDistance += accuracyLast.value() + accuracyCurr.value();
-            } else if (accuracyLast) {
-                requiredDistance += 2.0 * accuracyLast.value();
-            } else if (accuracyCurr) {
-                requiredDistance += 2.0 * accuracyCurr.value();
-            }
-        }
-
         const auto distance = m_lastPoint->distance(point);
+        const auto requiredDistance = m_args->requiredDistanceMeters();
+
         if (distance < requiredDistance) {
             Logger::debug("Distance to last point insufficient ({:.3f} m, required {:.3f} m)", distance, requiredDistance);
             return std::nullopt;
@@ -176,18 +162,34 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() {
 
         evaluateMode(point.value());
 
-        // this is our interval, while not exeeded
-        // just consume the GPSD data
+        // seconds since last returned point
         auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - m_lastPointTime).count();
-        if (elapsedSeconds < m_args->pointIntervalSeconds()) {
-            continue;
-        }
 
-        // actual data we care about
-        std::optional<Point> filtered = point.and_then(std::bind(&LocLogPP::Geolocator::filterPoint, this, std::placeholders::_1));
-        if (!filtered) {
-            Logger::debug("Ignoring point due to filters");
-            continue;
+        if (m_state == State::STATIONARY) {
+            // this is our heartbeat interval while stationary
+            if (elapsedSeconds < m_args->stationaryHeartbeatSeconds()) {
+                continue;
+            }
+
+            Logger::info("Stationary heartbeat reached");
+
+            // heartbeat ignores filters and intead uses
+            // the center of past points
+            // we just fed evaluateMode so this can't be nullopt
+            point = pastPointsCenter().value();
+        } else {
+            // this is our regular interval while moving
+            if (elapsedSeconds < m_args->pointIntervalSeconds()) {
+                continue;
+            }
+
+            // actual data we care about
+            std::optional<Point> filtered = point.and_then(std::bind(&LocLogPP::Geolocator::filterPoint, this, std::placeholders::_1));
+            if (!filtered) {
+                Logger::debug("Ignoring point due to filters");
+                continue;
+            }
+
         }
 
         m_lastPoint = point;
