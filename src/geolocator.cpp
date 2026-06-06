@@ -84,18 +84,63 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::pastPointsCenter() const {
         return std::nullopt;
     }
 
-    double latSum{};
-    double lonSum{};
+    double latSum{0.0};
+    double lonSum{0.0};
+
+    double speedSum{0.0};
+    int speedCount{0};
+
+    double accSum{0.0};
+    int accCount{0};
+
+    double altSum{0.0};
+    int altCount{0};
 
     for (const auto &point : m_pastPoints) {
         latSum += point.latitude();
         lonSum += point.longitude();
+
+        if (const auto &speed = point.speed()) {
+            speedSum += speed.value();
+            speedCount += 1;
+        }
+
+        if (const auto &acc = point.accuracy()) {
+            accSum += acc.value();
+            accCount += 1;
+        }
+
+        if (const auto &alt = point.altitude()) {
+            altSum += alt.value();
+            altCount += 1;
+        }
     }
 
     const double latMean{latSum / m_pastPoints.size()};
     const double lonMean{lonSum / m_pastPoints.size()};
 
-    return Point{m_pastPoints.back().timestamp(), static_cast<float>(latMean), static_cast<float>(lonMean)};
+    std::optional<double> speedMean{};
+    if (speedCount > 0) {
+        speedMean = speedSum / speedCount;
+    }
+
+    std::optional<double> accMean{};
+    if (accCount > 0) {
+        accMean = accSum / accCount;
+    }
+
+    std::optional<double> altMean{};
+    if (altCount > 0) {
+        altMean = altSum / altCount;
+    }
+
+    // XXX: does it make sense to use last points timestamp?
+    return Point{m_pastPoints.back().timestamp(),
+                 static_cast<float>(latMean),
+                 static_cast<float>(lonMean),
+                 speedMean,
+                 accMean,
+                 altMean};
 }
 
 void LocLogPP::Geolocator::evaluateMode(LocLogPP::Point &point) {
