@@ -170,41 +170,41 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
 
     
     // older cluster
-    double oldHalfLat{0.0};
-    double oldHalfLon{0.0};
+    double oldLat{0.0};
+    double oldLon{0.0};
     int oldCount{0};
 
     for (auto it = m_pastPoints.begin(); it != m_pastPoints.begin() + m_pastPoints.size() / 2; it++) {
-        oldHalfLat += it->latitude();
-        oldHalfLon += it->longitude();
+        oldLat += it->latitude();
+        oldLon += it->longitude();
         oldCount += 1;
     }
 
-    const double oldHalfLatMean{oldHalfLat / oldCount};
-    const double oldHalfLonMean{oldHalfLon / oldCount};
+    const double oldLatMean{oldLat / oldCount};
+    const double oldLonMean{oldLon / oldCount};
 
-    const Point oldHalfCenter{0, static_cast<float>(oldHalfLat), static_cast<float>(oldHalfLon)};
+    const Point oldCenter{0, static_cast<float>(oldLatMean), static_cast<float>(oldLonMean)};
 
     // newer cluster
-    double newHalfLat{0.0};
-    double newHalfLon{0.0};
+    double newLat{0.0};
+    double newLon{0.0};
     int newCount{0};
 
     for (auto it = m_pastPoints.begin() + m_pastPoints.size() / 2; it != m_pastPoints.end(); it++) {
-        newHalfLat += it->latitude();
-        newHalfLon += it->longitude();
+        newLat += it->latitude();
+        newLon += it->longitude();
         newCount += 1;
     }
 
-    const double newHalfLatMean{newHalfLat / newCount};
-    const double newHalfLonMean{newHalfLon / newCount};
+    const double newLatMean{newLat / newCount};
+    const double newLonMean{newLon / newCount};
 
-    const Point newHalfCenter{0, static_cast<float>(newHalfLat), static_cast<float>(newHalfLon)};
+    const Point newCenter{0, static_cast<float>(newLatMean), static_cast<float>(newLonMean)};
 
-    const double distance = oldHalfCenter.distance(newHalfCenter);
+    const double distance = oldCenter.distance(newCenter);
 
-    Logger::debug("Center of old cluster: {}", oldHalfCenter.toString());
-    Logger::debug("Center of new cluster: {}", newHalfCenter.toString());
+    Logger::debug("Center of old cluster: {}", oldCenter.toString());
+    Logger::debug("Center of new cluster: {}", newCenter.toString());
     Logger::debug("Distance: {:.3f} m", distance);
 
     // set state
