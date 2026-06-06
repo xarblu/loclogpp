@@ -146,7 +146,7 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::pastPointsCenter() const {
 
 void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     // We detect movement by calculating the center of the
-    // older 50% and the newer 50% of recent points.
+    // older 75% and the newer 25% of recent points.
     // If these clusters are more than stationaryDistance
     // apart we enter MOVING state, else STATIONARY
 
@@ -156,6 +156,10 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     // amount of points to keep for evaluation
     constexpr size_t evalPointsRequired{10};
     constexpr size_t evalPointsMax{50};
+
+    // [0, pivot-1] belongs to old
+    // [pivot, end] belongs to new
+    const auto pivot{std::lround(static_cast<double>(m_pastPoints.size()) * 0.75)};
 
     // manage points
     m_pastPoints.push_back(point);
@@ -168,16 +172,14 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
         m_pastPoints.pop_front();
     }
 
-    
     // older cluster
     double oldLat{0.0};
     double oldLon{0.0};
-    int oldCount{0};
+    const auto oldCount{pivot};
 
-    for (auto it = m_pastPoints.begin(); it != m_pastPoints.begin() + m_pastPoints.size() / 2; it++) {
+    for (auto it = m_pastPoints.begin(); it != m_pastPoints.begin() + pivot; it++) {
         oldLat += it->latitude();
         oldLon += it->longitude();
-        oldCount += 1;
     }
 
     const double oldLatMean{oldLat / oldCount};
@@ -188,12 +190,11 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     // newer cluster
     double newLat{0.0};
     double newLon{0.0};
-    int newCount{0};
+    const auto newCount{m_pastPoints.size() - pivot};
 
-    for (auto it = m_pastPoints.begin() + m_pastPoints.size() / 2; it != m_pastPoints.end(); it++) {
+    for (auto it = m_pastPoints.begin() + pivot; it != m_pastPoints.end(); it++) {
         newLat += it->latitude();
         newLon += it->longitude();
-        newCount += 1;
     }
 
     const double newLatMean{newLat / newCount};
