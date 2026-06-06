@@ -143,7 +143,7 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::pastPointsCenter() const {
                  altMean};
 }
 
-void LocLogPP::Geolocator::evaluateMode(LocLogPP::Point &point) {
+void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     // We detect movement by calculating the center of the
     // older 50% and the newer 50% of recent points.
     // If these clusters are more than stationaryDistance
@@ -229,7 +229,7 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() {
             continue;
         }
 
-        evaluateMode(point.value());
+        evaluateState(point.value());
 
         // seconds since last returned point
         auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - m_lastPointTime).count();

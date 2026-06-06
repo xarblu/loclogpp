@@ -68,9 +68,9 @@ private:
     std::optional<Point> pastPointsCenter() const;
 
     /**
-     * Store copy of the point and evaluate mode
+     * Store copy of the point and evaluate state
      */
-    void evaluateMode(Point &point);
+    void evaluateState(Point &point);
 
 public:
     /**
