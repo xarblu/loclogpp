@@ -29,6 +29,7 @@ class ArgParser {
     std::string m_gpsdHost{"localhost"};
     std::string m_gpsdPort{DEFAULT_GPSD_PORT};
     int m_pointIntervalSeconds{5};
+    int m_stationaryHeartbeatSeconds{300};
     double m_requiredAccuracyMeters{200.0};
     double m_requiredDistanceMeters{5.0};
 
@@ -59,6 +60,7 @@ public:
     std::string gpsdHost() const { return m_gpsdHost; };
     std::string gpsdPort() const { return m_gpsdPort; };
     int pointIntervalSeconds() const { return m_pointIntervalSeconds; }
+    int stationaryHeartbeatSeconds() const { return m_stationaryHeartbeatSeconds; }
     double requiredAccuracyMeters() const { return m_requiredAccuracyMeters; }
     double requiredDistanceMeters() const { return m_requiredDistanceMeters; }
 };

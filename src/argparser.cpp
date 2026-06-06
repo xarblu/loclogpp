@@ -13,21 +13,22 @@ void LocLogPP::ArgParser::printHelp() {
     std::cerr << "Usage: loclogpp {GLOBAL_OPT...} OPERATION {OPERATION_OPT...}\n"
               << "\n"
               << "GLOBAL_OPTs:\n"
-              << "  -h|--help            Print this help message\n"
-              << "  -d|--db-file         SQLite3 database file (default: " << defaults.dbFile() << ")\n"
-              << "  -l|--log-level       Log level [DEBUG,INFO,WARN,ERROR] (default: " << Logger::priorityToString(defaults.logLevel()) << ")\n"
-              << "  --syslog             Enable syslog compatible prio-prefixes (<prio>Message) instead of our own\n"
+              << "  -h|--help               Print this help message\n"
+              << "  -d|--db-file            SQLite3 database file (default: " << defaults.dbFile() << ")\n"
+              << "  -l|--log-level          Log level [DEBUG,INFO,WARN,ERROR] (default: " << Logger::priorityToString(defaults.logLevel()) << ")\n"
+              << "  --syslog                Enable syslog compatible prio-prefixes (<prio>Message) instead of our own\n"
               << "\n"
               << "OPERATIONs:\n"
-              << "  track                Run the tracker\n"
-              << "  export               Export collected points\n"
+              << "  track                   Run the tracker\n"
+              << "  export                  Export collected points\n"
               << "\n"
               << "OPERATION_OPTs for track:\n"
-              << "  --gpsd-host          GPSD host address (default: " << defaults.gpsdHost() << ")\n"
-              << "  --gpsd-port          GPSD host port (default: " << defaults.gpsdPort() << ")\n"
-              << "  --point-interval     Minimum point interval between points in seconds (default: " << defaults.pointIntervalSeconds() << ")\n"
-              << "  --required-accuracy  Minimum accuracy required in meters (default: " << defaults.requiredAccuracyMeters() << ")\n"
-              << "  --required-distance  Minimum distance required between points in meters (default: " << defaults.requiredDistanceMeters() << ")\n"
+              << "  --gpsd-host             GPSD host address (default: " << defaults.gpsdHost() << ")\n"
+              << "  --gpsd-port             GPSD host port (default: " << defaults.gpsdPort() << ")\n"
+              << "  --point-interval        Minimum point interval between points in seconds (default: " << defaults.pointIntervalSeconds() << ")\n"
+              << "  --stationary-heartbeat  Point interval while stationary (default: " << defaults.stationaryHeartbeatSeconds() << ")\n"
+              << "  --required-accuracy     Minimum accuracy required in meters (default: " << defaults.requiredAccuracyMeters() << ")\n"
+              << "  --required-distance     Minimum distance required between points in meters (default: " << defaults.requiredDistanceMeters() << ")\n"
               << "\n"
               << "OPERATION_OPTs for export:\n";
 }
@@ -138,6 +139,20 @@ std::pair<int, std::shared_ptr<LocLogPP::ArgParser>> LocLogPP::ArgParser::parse(
                         }
                         try {
                             parser->m_pointIntervalSeconds = std::stoi(std::string{argv[++i]});
+                            continue;
+                        } catch(std::invalid_argument e) {
+                            Logger::error("Bad interger value for: {}", arg);
+                            return {1, nullptr};
+                        }
+                    }
+
+                    if (arg == "--stationary-heartbeat") {
+                        if (i + 1 >= argc) {
+                            Logger::error("Argument requires value: {}", arg);
+                            return {1, nullptr};
+                        }
+                        try {
+                            parser->m_stationaryHeartbeatSeconds = std::stoi(std::string{argv[++i]});
                             continue;
                         } catch(std::invalid_argument e) {
                             Logger::error("Bad interger value for: {}", arg);
