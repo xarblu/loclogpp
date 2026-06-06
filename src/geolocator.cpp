@@ -201,8 +201,14 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
 
     const Point newHalfCenter{0, static_cast<float>(newHalfLat), static_cast<float>(newHalfLon)};
 
+    const double distance = oldHalfCenter.distance(newHalfCenter);
+
+    Logger::debug("Center of old cluster: {}", oldHalfCenter.toString());
+    Logger::debug("Center of new cluster: {}", newHalfCenter.toString());
+    Logger::debug("Distance: {:.3f} m", distance);
+
     // set state
-    State state = (oldHalfCenter.distance(newHalfCenter) < stationaryDistance)
+    State state = (distance < stationaryDistance)
         ? State::STATIONARY 
         : State::MOVING;
 
