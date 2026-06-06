@@ -175,11 +175,12 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     // older cluster
     double oldLat{0.0};
     double oldLon{0.0};
-    const auto oldCount{pivot};
+    int oldCount{0};
 
     for (auto it = m_pastPoints.begin(); it != m_pastPoints.begin() + pivot; it++) {
         oldLat += it->latitude();
         oldLon += it->longitude();
+        oldCount += 1;
     }
 
     const double oldLatMean{oldLat / oldCount};
@@ -190,11 +191,12 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     // newer cluster
     double newLat{0.0};
     double newLon{0.0};
-    const auto newCount{m_pastPoints.size() - pivot};
+    int newCount{0};
 
     for (auto it = m_pastPoints.begin() + pivot; it != m_pastPoints.end(); it++) {
         newLat += it->latitude();
         newLon += it->longitude();
+        newCount += 1;
     }
 
     const double newLatMean{newLat / newCount};
