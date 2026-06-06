@@ -60,6 +60,14 @@ private:
     std::optional<Point> filterPoint(Point point) const;
 
     /**
+     * Get center of m_pastPoints, the Point timestamp
+     * will be copied from the last added point
+     *
+     * Returns nullopt if m_pastPoints does not contain any points
+     */
+    std::optional<Point> pastPointsCenter() const;
+
+    /**
      * Store copy of the point and evaluate mode
      */
     void evaluateMode(Point &point);

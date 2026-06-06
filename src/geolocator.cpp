@@ -93,6 +93,25 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
     return point;
 }
 
+std::optional<LocLogPP::Point> LocLogPP::Geolocator::pastPointsCenter() const {
+    if (m_pastPoints.empty()) {
+        return std::nullopt;
+    }
+
+    double latSum{};
+    double lonSum{};
+
+    for (const auto &point : m_pastPoints) {
+        latSum += point.latitude();
+        lonSum += point.longitude();
+    }
+
+    const double latMean{latSum / m_pastPoints.size()};
+    const double lonMean{lonSum / m_pastPoints.size()};
+
+    return Point{m_pastPoints.back().timestamp(), static_cast<float>(latMean), static_cast<float>(lonMean)};
+}
+
 void LocLogPP::Geolocator::evaluateMode(LocLogPP::Point &point) {
     m_pastPoints.push_back(point);
 
@@ -112,18 +131,9 @@ void LocLogPP::Geolocator::evaluateMode(LocLogPP::Point &point) {
     // a certain radius around their center
     // we'll enter stationary mode
 
-    double latSum{};
-    double lonSum{};
-
-    for (const auto &point : m_pastPoints) {
-        latSum += point.latitude();
-        lonSum += point.longitude();
-    }
-
-    const double latMean{latSum / m_pastPoints.size()};
-    const double lonMean{lonSum / m_pastPoints.size()};
-
-    const Point center{0, static_cast<float>(latMean), static_cast<float>(lonMean)};
+    // we ensured m_pastPoints isn't empty so this will
+    // never be nullopt
+    const Point center = pastPointsCenter().value();
 
     // if any point exceeds this we are moving
     constexpr double stationaryRadius{10.0};
