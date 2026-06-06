@@ -96,9 +96,11 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
 void LocLogPP::Geolocator::evaluateMode(LocLogPP::Point &point) {
     m_pastPoints.push_back(point);
 
+    // past points used
     constexpr size_t evalPoints{10};
+
     if (m_pastPoints.size() < evalPoints) {
-        Logger::debug("Not enough eoints for mode evaluation (have {} need {})", m_pastPoints.size(), evalPoints);
+        Logger::debug("Not enough points for mode evaluation (have {} need {})", m_pastPoints.size(), evalPoints);
         return;
     }
 
