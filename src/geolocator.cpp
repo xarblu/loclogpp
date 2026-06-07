@@ -54,16 +54,19 @@ std::unique_ptr<LocLogPP::Geolocator> LocLogPP::Geolocator::create(std::shared_p
         return nullptr;
     }
 
+    // seed inital last point from DB
+    auto points = geolocator->m_db->getPoints();
+    Logger::info("Database contains {} points", points.size());
+    if (!points.empty()) {
+        Logger::info("Last point:\n{}", points.back().toString());
+        geolocator->m_lastPoint = points.back();
+        geolocator->m_pastPoints.push_back(points.back());
+    }
+
     return geolocator;
 }
 
 int LocLogPP::Geolocator::track(std::shared_ptr<ArgParser> args, Database *db) {
-    auto points = db->getPoints();
-    Logger::info("Database contains {} points", points.size());
-    if (!points.empty()) {
-        Logger::info("Last point:\n{}", points.back().toString());
-    }
-
     std::unique_ptr<Geolocator> geolocator{nullptr};
     while (!(geolocator = LocLogPP::Geolocator::create(args, db))) {
         Logger::error("Geolocator init failed");
