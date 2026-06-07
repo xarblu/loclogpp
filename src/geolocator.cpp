@@ -224,11 +224,11 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     // apart we enter MOVING state, else STATIONARY
 
     // threshold of cluster distance before going MOVING
-    constexpr double stationaryDistance{10.0};
+    constexpr double stationaryDistance{15.0};
 
     // amount of points to keep for evaluation
-    constexpr size_t evalPointsRequired{10};
-    constexpr size_t evalPointsMax{50};
+    constexpr size_t evalPointsRequired{30};
+    constexpr size_t evalPointsMax{60};
 
     // [0, pivot-1] belongs to old
     // [pivot, end] belongs to new
