@@ -114,7 +114,11 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::preFilterPoint(Point point)
 
         const auto distance = lastPoint.distance(point);
         const auto timeDelta = point.timestamp() - lastPoint.timestamp();
-        const auto speed = distance / timeDelta;
+
+        double speed{0.0};
+        if (timeDelta >= 0) {
+            speed = distance / timeDelta;
+        }
 
         // we'll cap the speed at 1000 km/h
         // which is almost the speed of sound (1235 km/h)
