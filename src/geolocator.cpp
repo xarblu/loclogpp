@@ -66,32 +66,6 @@ std::unique_ptr<LocLogPP::Geolocator> LocLogPP::Geolocator::create(std::shared_p
     return geolocator;
 }
 
-int LocLogPP::Geolocator::track(std::shared_ptr<ArgParser> args, Database *db) {
-    std::unique_ptr<Geolocator> geolocator{nullptr};
-    while (!(geolocator = LocLogPP::Geolocator::create(args, db))) {
-        Logger::error("Geolocator init failed");
-        Logger::warn("Retrying in 5s");
-        std::this_thread::sleep_for(std::chrono::seconds{5});
-    }
-    Logger::info("Geolocator initialized");
-
-    while (true) {
-        int ret = geolocator->trackInternal();
-        if (ret > 0) {
-            Logger::error("Internal tracker loop died");
-            Logger::warn("Re-creating Geolocator");
-            while (!(geolocator = LocLogPP::Geolocator::create(args, db))) {
-                Logger::error("Geolocator init failed");
-                Logger::warn("Retrying in 5s");
-                std::this_thread::sleep_for(std::chrono::seconds{5});
-            }
-            continue;
-        }
-    }
-
-    return 0;
-}
-
 std::optional<LocLogPP::Point> LocLogPP::Geolocator::preFilterPoint(Point point) const {
     Logger::debug("Applying point pre-filter");
 
@@ -385,6 +359,32 @@ int LocLogPP::Geolocator::trackInternal() {
         m_lastPoint = point;
         m_lastPointTime = std::chrono::steady_clock::now();
         m_db->addPoint(point.value());
+    }
+
+    return 0;
+}
+
+int LocLogPP::Geolocator::track(std::shared_ptr<ArgParser> args, Database *db) {
+    std::unique_ptr<Geolocator> geolocator{nullptr};
+    while (!(geolocator = LocLogPP::Geolocator::create(args, db))) {
+        Logger::error("Geolocator init failed");
+        Logger::warn("Retrying in 5s");
+        std::this_thread::sleep_for(std::chrono::seconds{5});
+    }
+    Logger::info("Geolocator initialized");
+
+    while (true) {
+        int ret = geolocator->trackInternal();
+        if (ret > 0) {
+            Logger::error("Internal tracker loop died");
+            Logger::warn("Re-creating Geolocator");
+            while (!(geolocator = LocLogPP::Geolocator::create(args, db))) {
+                Logger::error("Geolocator init failed");
+                Logger::warn("Retrying in 5s");
+                std::this_thread::sleep_for(std::chrono::seconds{5});
+            }
+            continue;
+        }
     }
 
     return 0;
