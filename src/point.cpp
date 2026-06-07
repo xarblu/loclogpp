@@ -139,7 +139,7 @@ double LocLogPP::Point::distance(const Point &other) const {
 
 std::string LocLogPP::Point::toString() const {
     return std::format(
-        "timestamp: {}\n"
+        "timestamp: {:%FT%TZ}\n"
         "latitude: {}\n" 
         "longitude: {}\n"
         "altitude: {}\n" 
