@@ -116,7 +116,7 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::preFilterPoint(Point point)
         const auto timeDelta = point.timestamp() - lastPoint.timestamp();
 
         double speed{0.0};
-        if (timeDelta >= 0) {
+        if (timeDelta > 0) {
             speed = distance / timeDelta;
         }
 
