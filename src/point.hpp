@@ -3,7 +3,6 @@
 #include <libgpsmm.h>
 #include <sqlite3.h>
 
-#include <cstdint>
 #include <optional>
 #include <string>
 #include <chrono>
@@ -69,6 +68,11 @@ public:
      * using the haversine formula
      */
     double distance(const Point &other) const;
+
+    /**
+     * Update info inside point with that of other
+     */
+    void update(const Point &other);
 
     /**
      * Convert to formatted string

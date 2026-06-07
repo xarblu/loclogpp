@@ -137,6 +137,15 @@ double LocLogPP::Point::distance(const Point &other) const {
     return distance;
 }
 
+void LocLogPP::Point::update(const Point &other) {
+    m_timestamp = other.timestamp();
+    m_latitude = other.latitude();
+    m_longitude = other.longitude();
+    if (other.speed()) m_speed = other.speed();
+    if (other.accuracy()) m_accuracy = other.accuracy();
+    if (other.altitude()) m_altitude = other.altitude();
+}
+
 std::string LocLogPP::Point::toString() const {
     return std::format(
         "timestamp: {:%FT%TZ}\n"
