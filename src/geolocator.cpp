@@ -375,15 +375,17 @@ int LocLogPP::Geolocator::track(std::shared_ptr<ArgParser> args, Database *db) {
 
     while (true) {
         int ret = geolocator->trackInternal();
-        if (ret > 0) {
-            Logger::error("Internal tracker loop died");
-            Logger::warn("Re-creating Geolocator");
-            while (!(geolocator = LocLogPP::Geolocator::create(args, db))) {
-                Logger::error("Geolocator init failed");
-                Logger::warn("Retrying in 5s");
-                std::this_thread::sleep_for(std::chrono::seconds{5});
-            }
-            continue;
+        if (ret == 0) {
+            Logger::info("Internal tracker loop shut down cleanly");
+            break;
+        }
+
+        Logger::error("Internal tracker loop died");
+        Logger::warn("Re-creating Geolocator");
+        while (!(geolocator = LocLogPP::Geolocator::create(args, db))) {
+            Logger::error("Geolocator init failed");
+            Logger::warn("Retrying in 5s");
+            std::this_thread::sleep_for(std::chrono::seconds{5});
         }
     }
 
