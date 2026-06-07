@@ -1,6 +1,7 @@
 #include "geolocator.hpp"
 
 #include "argparser.hpp"
+#include "database.hpp"
 #include "logger.hpp"
 #include "point.hpp"
 
@@ -13,6 +14,7 @@
 #include <functional>
 #include <chrono>
 #include <cmath>
+#include <thread>
 
 static inline std::string stateToString(LocLogPP::Geolocator::State state) {
     switch (state) {
@@ -52,6 +54,41 @@ std::unique_ptr<LocLogPP::Geolocator> LocLogPP::Geolocator::create(std::shared_p
     }
 
     return geolocator;
+}
+
+int LocLogPP::Geolocator::track(std::shared_ptr<ArgParser> args, Database *db) {
+    auto points = db->getPoints();
+    Logger::info("Database contains {} points", points.size());
+    if (!points.empty()) {
+        Logger::info("Last point:\n{}", points.back().toString());
+    }
+
+    std::unique_ptr<Geolocator> geolocator{nullptr};
+    while (!(geolocator = LocLogPP::Geolocator::create(args))) {
+        Logger::error("Geolocator init failed");
+        Logger::warn("Retrying in 5s");
+        std::this_thread::sleep_for(std::chrono::seconds{5});
+    }
+    Logger::info("Geolocator initialized");
+
+    while (true) {
+        auto point = geolocator->awaitPoint();
+        if (!point) {
+            Logger::error("Got no point - assuming GPSD connection died");
+            Logger::warn("Re-creating Geolocator");
+            while (!(geolocator = LocLogPP::Geolocator::create(args))) {
+                Logger::error("Geolocator init failed");
+                Logger::warn("Retrying in 5s");
+                std::this_thread::sleep_for(std::chrono::seconds{5});
+            }
+            continue;
+        }
+
+        Logger::info("Got point:\n{}", point->toString());
+        db->addPoint(point.value());
+    }
+
+    return 0;
 }
 
 std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) const {

@@ -13,6 +13,8 @@
 
 namespace LocLogPP {
 
+class Database;
+
 class Geolocator {
 public:
     enum class State {
@@ -81,6 +83,11 @@ public:
      * nullptr on error
      */
     static std::unique_ptr<Geolocator> create(std::shared_ptr<ArgParser> args);
+
+    /**
+     * Start main Geolocator tracking loop
+     */
+    static int track(std::shared_ptr<ArgParser> args, Database *db);
 
     /**
      * No copying

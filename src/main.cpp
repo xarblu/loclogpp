@@ -27,40 +27,8 @@ int main(int argc, char* argv[]) {
 
 
     switch (args->operation()) {
-        case Operation::TRACK: {
-            auto points = db->getPoints();
-            Logger::info("Database contains {} points", points.size());
-            if (!points.empty()) {
-                Logger::info("Last point:\n{}", points.back().toString());
-            }
-
-            std::unique_ptr<Geolocator> geolocator{nullptr};
-            while (!(geolocator = LocLogPP::Geolocator::create(args))) {
-                Logger::error("Geolocator init failed");
-                Logger::warn("Retrying in 5s");
-                std::this_thread::sleep_for(std::chrono::seconds{5});
-            }
-            Logger::info("Geolocator initialized");
-
-            while (true) {
-                auto point = geolocator->awaitPoint();
-                if (!point) {
-                    Logger::error("Got no point - assuming GPSD connection died");
-                    Logger::warn("Re-creating Geolocator");
-                    while (!(geolocator = LocLogPP::Geolocator::create(args))) {
-                        Logger::error("Geolocator init failed");
-                        Logger::warn("Retrying in 5s");
-                        std::this_thread::sleep_for(std::chrono::seconds{5});
-                    }
-                    continue;
-                }
-
-                Logger::info("Got point:\n{}", point->toString());
-                db->addPoint(point.value());
-            }
-
-            break;
-        }
+        case Operation::TRACK:
+            return Geolocator::track(args, db.get());
 
         case Operation::EXPORT: {
             std::cout << Exporter::toGPX(db.get());
