@@ -76,9 +76,9 @@ int LocLogPP::Geolocator::track(std::shared_ptr<ArgParser> args, Database *db) {
     Logger::info("Geolocator initialized");
 
     while (true) {
-        auto point = geolocator->awaitPoint();
-        if (!point) {
-            Logger::error("Got no point - assuming GPSD connection died");
+        int ret = geolocator->trackInternal();
+        if (ret > 0) {
+            Logger::error("Internal tracker loop died");
             Logger::warn("Re-creating Geolocator");
             while (!(geolocator = LocLogPP::Geolocator::create(args, db))) {
                 Logger::error("Geolocator init failed");
@@ -87,9 +87,6 @@ int LocLogPP::Geolocator::track(std::shared_ptr<ArgParser> args, Database *db) {
             }
             continue;
         }
-
-        Logger::info("Got point:\n{}", point->toString());
-        db->addPoint(point.value());
     }
 
     return 0;
@@ -294,7 +291,7 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     }
 }
 
-std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() {
+int LocLogPP::Geolocator::trackInternal() {
     while (true) {
         // GPSD can send "the same point" multiple times (different NMEA sentences or something)
         // we'll merge those into a single point based on their timestamp
@@ -315,7 +312,7 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() {
             data = m_gps->read();
             if (!data) {
                 Logger::error("GPSD read error");
-                return std::nullopt;
+                return 1;
             }
 
             std::optional<Point> newPoint = Point::fromGPSD(*data);
@@ -384,8 +381,11 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() {
             }
         }
 
+        Logger::info("Got point:\n{}", point->toString());
         m_lastPoint = point;
         m_lastPointTime = std::chrono::steady_clock::now();
-        return point;
+        m_db->addPoint(point.value());
     }
+
+    return 0;
 }

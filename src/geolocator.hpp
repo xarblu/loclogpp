@@ -77,6 +77,13 @@ private:
      */
     void evaluateState(Point &point);
 
+    /**
+     * Internal tracker loop
+     *
+     * Returns int > 0 on error
+     */
+    int trackInternal();
+
 public:
     /**
      * Create a Geolocator
@@ -97,13 +104,6 @@ public:
      */
     Geolocator(Geolocator &other) = delete;
     void operator=(Geolocator &other) = delete;
-
-    /**
-     * Await the next point
-     *
-     * Returns nullopt on GPSD read error
-     */
-    std::optional<Point> awaitPoint();
 };
 
 } // namespace LocLogPP
