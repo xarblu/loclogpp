@@ -127,10 +127,10 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::preFilterPoint(Point point)
         // and probably reasonably
         constexpr double limit{1000.0 / 3.6};
         if (speed > limit) {
-            Logger::debug("Point jumped at unreasonable speed (speed: {} m/s, limit: {})", speed, limit);
+            Logger::debug("Point jumped at unreasonable speed (speed: {:.3f} m/s, limit: {:.3f} m/s)", speed, limit);
             return std::nullopt;
         }
-        Logger::debug("Point jumped within reasonable speed (speed: {} m/s, limit: {})", speed, limit);
+        Logger::debug("Point jumped within reasonable speed (speed: {:.3f} m/s, limit: {:.3f} m/s)", speed, limit);
     }
 
     return point;
