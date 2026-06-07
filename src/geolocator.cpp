@@ -324,6 +324,12 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() {
                 continue;
             }
 
+            // this should only happen once during startup
+            if (!stagingPoint) [[unlikely]] {
+                stagingPoint.swap(newPoint);
+                continue;
+            }
+
             if (newPoint->timestamp() != stagingPoint->timestamp()) {
                 nextPoint.swap(newPoint);
                 break;
