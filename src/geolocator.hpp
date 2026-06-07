@@ -55,6 +55,15 @@ private:
     Geolocator() = default;
 
     /**
+     * Create a Geolocator
+     * Connects to the given GPSD host+port
+     * and enables streaming
+     *
+     * nullptr on error
+     */
+    static std::unique_ptr<Geolocator> create(std::shared_ptr<ArgParser> args, Database *db);
+
+    /**
      * Apply point filters
      * preFilterPoint applies to all points right after parsing
      * filterPoints applies to the MOVING path only
@@ -85,15 +94,6 @@ private:
     int trackInternal();
 
 public:
-    /**
-     * Create a Geolocator
-     * Connects to the given GPSD host+port
-     * and enables streaming
-     *
-     * nullptr on error
-     */
-    static std::unique_ptr<Geolocator> create(std::shared_ptr<ArgParser> args, Database *db);
-
     /**
      * Start main Geolocator tracking loop
      */
