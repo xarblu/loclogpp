@@ -25,10 +25,11 @@ static inline std::string stateToString(LocLogPP::Geolocator::State state) {
     }
 }
 
-std::unique_ptr<LocLogPP::Geolocator> LocLogPP::Geolocator::create(std::shared_ptr<ArgParser> args) {
+std::unique_ptr<LocLogPP::Geolocator> LocLogPP::Geolocator::create(std::shared_ptr<ArgParser> args, Database *db) {
     std::unique_ptr<Geolocator> geolocator{new Geolocator()};
 
     geolocator->m_args = args;
+    geolocator->m_db = db;
 
     // Explicitly keep a copy of these attached to Geolocator.
     // GPSD stores a raw C string (aka char*) to them so they must outlive gpsmm
@@ -64,7 +65,7 @@ int LocLogPP::Geolocator::track(std::shared_ptr<ArgParser> args, Database *db) {
     }
 
     std::unique_ptr<Geolocator> geolocator{nullptr};
-    while (!(geolocator = LocLogPP::Geolocator::create(args))) {
+    while (!(geolocator = LocLogPP::Geolocator::create(args, db))) {
         Logger::error("Geolocator init failed");
         Logger::warn("Retrying in 5s");
         std::this_thread::sleep_for(std::chrono::seconds{5});
@@ -76,7 +77,7 @@ int LocLogPP::Geolocator::track(std::shared_ptr<ArgParser> args, Database *db) {
         if (!point) {
             Logger::error("Got no point - assuming GPSD connection died");
             Logger::warn("Re-creating Geolocator");
-            while (!(geolocator = LocLogPP::Geolocator::create(args))) {
+            while (!(geolocator = LocLogPP::Geolocator::create(args, db))) {
                 Logger::error("Geolocator init failed");
                 Logger::warn("Retrying in 5s");
                 std::this_thread::sleep_for(std::chrono::seconds{5});

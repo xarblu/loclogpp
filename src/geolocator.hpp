@@ -23,8 +23,8 @@ public:
     };
 
 private:
-
     std::unique_ptr<gpsmm> m_gps{nullptr};
+    Database *m_db{nullptr};
 
     /**
      * Parameters
@@ -82,7 +82,7 @@ public:
      *
      * nullptr on error
      */
-    static std::unique_ptr<Geolocator> create(std::shared_ptr<ArgParser> args);
+    static std::unique_ptr<Geolocator> create(std::shared_ptr<ArgParser> args, Database *db);
 
     /**
      * Start main Geolocator tracking loop
