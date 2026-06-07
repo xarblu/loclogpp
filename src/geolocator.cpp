@@ -113,7 +113,9 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::preFilterPoint(Point point)
         const auto &lastPoint = m_pastPoints.back();
 
         const auto distance = lastPoint.distance(point);
-        const auto timeDelta = point.timestamp() - lastPoint.timestamp();
+
+        // delta in seconds
+        const double timeDelta = std::chrono::duration_cast<std::chrono::milliseconds>(point.timestamp() - lastPoint.timestamp()).count() / 1000.0;
 
         double speed{0.0};
         if (timeDelta > 0) {
@@ -257,7 +259,7 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     const double oldLatMean{oldLat / oldCount};
     const double oldLonMean{oldLon / oldCount};
 
-    const Point oldCenter{0, static_cast<float>(oldLatMean), static_cast<float>(oldLonMean)};
+    const Point oldCenter{std::chrono::system_clock::now(), static_cast<float>(oldLatMean), static_cast<float>(oldLonMean)};
 
     // newer cluster
     double newLat{0.0};
@@ -273,7 +275,7 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     const double newLatMean{newLat / newCount};
     const double newLonMean{newLon / newCount};
 
-    const Point newCenter{0, static_cast<float>(newLatMean), static_cast<float>(newLonMean)};
+    const Point newCenter{std::chrono::system_clock::now(), static_cast<float>(newLatMean), static_cast<float>(newLonMean)};
 
     const double distance = oldCenter.distance(newCenter);
 

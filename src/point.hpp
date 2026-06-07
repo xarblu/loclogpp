@@ -6,11 +6,12 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <chrono>
 
 namespace LocLogPP {
 
 class Point {
-    std::int64_t m_timestamp;
+    std::chrono::system_clock::time_point m_timestamp{};
     float m_latitude;
     float m_longitude;
     std::optional<float> m_speed{std::nullopt};
@@ -24,7 +25,7 @@ public:
     /**
      * Public constructor only with all valid params
      */
-    explicit Point(std::int64_t timestamp, float latitude, float longitude, std::optional<float> speed = std::nullopt, std::optional<float> accuracy = std::nullopt, std::optional<float> altitude = std::nullopt)
+    explicit Point(std::chrono::system_clock::time_point timestamp, float latitude, float longitude, std::optional<float> speed = std::nullopt, std::optional<float> accuracy = std::nullopt, std::optional<float> altitude = std::nullopt)
         : m_timestamp{timestamp}
         , m_latitude{latitude}
         , m_longitude{longitude}
@@ -56,7 +57,7 @@ public:
     /**
      * Getters
      */
-    std::int64_t timestamp() const { return m_timestamp; }
+    std::chrono::system_clock::time_point timestamp() const { return m_timestamp; }
     float latitude() const { return m_latitude; }
     float longitude() const { return m_longitude; }
     std::optional<float> speed() const { return m_speed; }

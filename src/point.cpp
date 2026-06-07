@@ -52,7 +52,8 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
     Point point{};
 
     if (data.set & TIME_SET) {
-        point.m_timestamp = data.fix.time.tv_sec;
+        point.m_timestamp += std::chrono::seconds{data.fix.time.tv_sec};
+        point.m_timestamp += std::chrono::microseconds{data.fix.time.tv_nsec / 1000};
     } else {
         Logger::debug("fix.time is required");
         return std::nullopt;
@@ -101,7 +102,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromSQL(sqlite3_stmt *statement)
 
     Point point{};
 
-    point.m_timestamp = sqlite3_column_int64(statement, 1);
+    point.m_timestamp = std::chrono::system_clock::time_point{std::chrono::seconds{sqlite3_column_int64(statement, 1)}};
     point.m_latitude = sqlite3_column_double(statement, 2);
     point.m_longitude = sqlite3_column_double(statement, 3);
     if (sqlite3_column_type(statement, 4) != SQLITE_NULL) {
@@ -154,7 +155,7 @@ std::string LocLogPP::Point::toString() const {
 
 std::string LocLogPP::Point::toSQL() const {
     std::string sqlPoint{"(NULL,"};
-    sqlPoint += std::format(" {},", m_timestamp);
+    sqlPoint += std::format(" {},", std::chrono::duration_cast<std::chrono::seconds>(m_timestamp.time_since_epoch()).count());
     sqlPoint += std::format(" {},", m_latitude);
     sqlPoint += std::format(" {},", m_longitude);
     if (m_speed) {
@@ -188,7 +189,7 @@ std::string LocLogPP::Point::toGPX() const {
     if (m_speed) {
         gpx << "        <speed>" << m_speed.value() << "</speed>\n";
     }
-    gpx << "        <time>" << unixSecondsToISO8601UTC(m_timestamp) << "</time>\n";
+    gpx << "        <time>" << std::format("{:%FT%TZ}", m_timestamp) << "</time>\n";
     gpx << "      </trkpt>\n";
 
     return std::move(gpx.str());
