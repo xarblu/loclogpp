@@ -112,10 +112,10 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::preFilterPoint(Point point)
     if (!m_pastPoints.empty()) {
         const auto &lastPoint = m_pastPoints.back();
 
-        const auto distance = lastPoint.distance(point);
+        const double distance = lastPoint.distance(point);
 
         // delta in seconds
-        const double timeDelta = std::chrono::duration_cast<std::chrono::milliseconds>(point.timestamp() - lastPoint.timestamp()).count() / 1000.0;
+        const double timeDelta = std::chrono::duration_cast<std::chrono::microseconds>(point.timestamp() - lastPoint.timestamp()).count() / 1000000.0;
 
         double speed{0.0};
         if (timeDelta > 0) {
@@ -127,10 +127,10 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::preFilterPoint(Point point)
         // and probably reasonably
         constexpr double limit{1000.0 / 3.6};
         if (speed > limit) {
-            Logger::debug("Point jumped at unreasonable speed (speed: {:.3f} m/s, limit: {:.3f} m/s)", speed, limit);
+            Logger::debug("Point jumped at unreasonable speed ({:.3f} m in {:.3f} s, avg. speed: {:.3f} m/s, limit: {:.3f} m/s)", distance, timeDelta, speed, limit);
             return std::nullopt;
         }
-        Logger::debug("Point jumped within reasonable speed (speed: {:.3f} m/s, limit: {:.3f} m/s)", speed, limit);
+        Logger::debug("Point jumped within reasonable speed ({:.3f} m in {:.3f} s, avg. speed: {:.3f} m/s, limit: {:.3f} m/s)", distance, timeDelta, speed, limit);
     }
 
     return point;
