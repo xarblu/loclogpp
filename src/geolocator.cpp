@@ -296,25 +296,50 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
 
 std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() {
     while (true) {
-        gps_data_t *data = nullptr;
+        // GPSD can send "the same point" multiple times (different NMEA sentences or something)
+        // we'll merge those into a single point based on their timestamp
+        // (that should be the same for all sentences)
 
-        // this is not really a point interval,
-        // just a timeout for "is data available yet?"
-        if (!m_gps->waiting(5000000)) {
-            continue;
+        std::optional<Point> stagingPoint{std::nullopt};
+        std::optional<Point> nextPoint{std::nullopt};
+
+        while (true) {
+            gps_data_t *data = nullptr;
+
+            // this is not really a point interval,
+            // just a timeout for "is data available yet?"
+            if (!m_gps->waiting(5000000)) {
+                continue;
+            }
+
+            data = m_gps->read();
+            if (!data) {
+                Logger::error("GPSD read error");
+                return std::nullopt;
+            }
+
+            std::optional<Point> newPoint = Point::fromGPSD(*data);
+            if (!newPoint) {
+                Logger::debug("Ignoring GPSD read without valid point data");
+                continue;
+            }
+
+            if (newPoint->timestamp() != stagingPoint->timestamp()) {
+                nextPoint.swap(newPoint);
+                break;
+            }
+
+            Logger::debug("Merging duplicate point");
+            stagingPoint->update(newPoint.value());
         }
 
-        data = m_gps->read();
-        if (!data) {
-            Logger::error("GPSD read error");
-            return std::nullopt;
-        }
-
-        std::optional<Point> point = Point::fromGPSD(*data);
-        if (!point) {
-            Logger::debug("Ignoring GPSD read without valid point data");
-            continue;
-        }
+        // after this:
+        // point -> stagingPoint
+        // stagingPoint -> nextPoint
+        // nextPoint -> nullopt
+        std::optional<Point> point{std::nullopt};
+        point.swap(stagingPoint);
+        stagingPoint.swap(nextPoint);
 
         point = point.and_then(std::bind(&LocLogPP::Geolocator::preFilterPoint, this, std::placeholders::_1));
         if (!point) {
