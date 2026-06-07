@@ -56,9 +56,12 @@ private:
 
     /**
      * Apply point filters
+     * preFilterPoint applies to all points right after parsing
+     * filterPoints applies to the MOVING path only
      * 
      * Returns nullopt if filtered, else the original point
      */
+    std::optional<Point> preFilterPoint(Point point) const;
     std::optional<Point> filterPoint(Point point) const;
 
     /**

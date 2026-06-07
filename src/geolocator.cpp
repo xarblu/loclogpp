@@ -95,9 +95,10 @@ int LocLogPP::Geolocator::track(std::shared_ptr<ArgParser> args, Database *db) {
     return 0;
 }
 
-std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) const {
-    Logger::debug("Applying point filter");
+std::optional<LocLogPP::Point> LocLogPP::Geolocator::preFilterPoint(Point point) const {
+    Logger::debug("Applying point pre-filter");
 
+    // basic accuracy filter
     if (point.accuracy()) {
         auto accuracy = point.accuracy().value();
         if (accuracy > m_args->requiredAccuracyMeters()) {
@@ -106,6 +107,31 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
         }
         Logger::debug("Point accuracy sufficient ({:.3f} m)", accuracy);
     }
+
+    // filter excessive jumps
+    if (!m_pastPoints.empty()) {
+        const auto &lastPoint = m_pastPoints.back();
+
+        const auto distance = lastPoint.distance(point);
+        const auto timeDelta = point.timestamp() - lastPoint.timestamp();
+        const auto speed = distance / timeDelta;
+
+        // we'll cap the speed at 1000 km/h
+        // which is almost the speed of sound (1235 km/h)
+        // and probably reasonably
+        constexpr double limit{1000.0 / 3.6};
+        if (speed > limit) {
+            Logger::debug("Point jumped at unreasonable speed (speed: {} m/s, limit: {})", speed, limit);
+            return std::nullopt;
+        }
+        Logger::debug("Point jumped within reasonable speed (speed: {} m/s, limit: {})", speed, limit);
+    }
+
+    return point;
+}
+
+std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) const {
+    Logger::debug("Applying point filter");
 
     if (m_lastPoint) {
         const auto distance = m_lastPoint->distance(point);
@@ -284,6 +310,12 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() {
             continue;
         }
 
+        point = point.and_then(std::bind(&LocLogPP::Geolocator::preFilterPoint, this, std::placeholders::_1));
+        if (!point) {
+            Logger::debug("Ignoring point due to filters");
+            continue;
+        }
+
         evaluateState(point.value());
 
         // seconds since last returned point
@@ -308,12 +340,11 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::awaitPoint() {
             }
 
             // actual data we care about
-            std::optional<Point> filtered = point.and_then(std::bind(&LocLogPP::Geolocator::filterPoint, this, std::placeholders::_1));
-            if (!filtered) {
+            point = point.and_then(std::bind(&LocLogPP::Geolocator::filterPoint, this, std::placeholders::_1));
+            if (!point) {
                 Logger::debug("Ignoring point due to filters");
                 continue;
             }
-
         }
 
         m_lastPoint = point;
