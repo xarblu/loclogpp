@@ -22,7 +22,7 @@ class Point {
 
     // only used internally
     double m_hdop{0.0};
-    std::optional<double> m_vdop{0.0}; // tied to m_altitude
+    std::optional<double> m_vdop{std::nullopt}; // tied to m_altitude
 
     // only allow default construction via helpers
     Point() = default;

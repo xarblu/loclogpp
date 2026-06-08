@@ -182,13 +182,17 @@ std::string LocLogPP::Point::toString() const {
         "longitude: {}\n"
         "altitude: {}\n" 
         "speed: {}\n"
-        "accuracy: {}",
+        "accuracy: {}"
+        "hdop: {}"
+        "vdop: {}",
         m_timestamp,
         m_latitude,
         m_longitude,
         m_altitude.value_or(NAN),
         m_speed.value_or(NAN),
-        m_accuracy.value_or(NAN));
+        m_accuracy.value_or(NAN),
+        m_hdop,
+        m_vdop.value_or(NAN));
 }
 
 std::string LocLogPP::Point::toSQL() const {
