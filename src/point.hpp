@@ -9,6 +9,8 @@
 
 namespace LocLogPP {
 
+class ArgParser;
+
 class Point {
     std::chrono::system_clock::time_point m_timestamp{};
     float m_latitude;
@@ -42,7 +44,7 @@ public:
      *
      * Returns nullopt if not all required values were available
      */
-    static std::optional<Point> fromGPSD(gps_data_t &point);
+    static std::optional<Point> fromGPSD(gps_data_t &point, ArgParser *args);
 
     /**
      * Parse from a row of our SQL points table

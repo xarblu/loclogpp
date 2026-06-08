@@ -1,6 +1,7 @@
 #include "point.hpp"
 
 #include "logger.hpp"
+#include "argparser.hpp"
 
 #include <gps.h>
 #include <libgpsmm.h>
@@ -18,9 +19,9 @@ static inline std::string unixSecondsToISO8601UTC(std::int64_t unixSeconds) {
     return std::format("{:%FT%TZ}", tp);
 }
 
-std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
+std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgParser *args) {
     if (!(data.set & MODE_SET)) {
-        Logger::debug("fix.mode is required");
+        Logger::debug("Point rejected: fix.mode is required");
         return std::nullopt;
     }
 
@@ -45,14 +46,20 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
     Logger::debug("fix.mode is {}", fixModeStr);
 
     if (data.fix.mode < MODE_2D) {
-        Logger::debug("fix.mode must be at least MODE_2D");
+        Logger::debug("Point rejected: fix.mode must be at least MODE_2D");
         return std::nullopt;
     }
 
     // reject low satellite count
     constexpr int satellitesRequired{5};
     if (data.satellites_used < satellitesRequired) {
-        Logger::debug("Won't trust point with low satellite count (has {}, want >{})", data.satellites_used, satellitesRequired);
+        Logger::debug("Point rejected: Low satellite count (has {}, want >{})", data.satellites_used, satellitesRequired);
+        return std::nullopt;
+    }
+
+    // reject bad HDOP
+    if (std::isfinite(data.dop.hdop) && data.dop.hdop > args->maxHDOP()) {
+        Logger::debug("Point rejected: Bad HDOP (has {:.3f}, max {:.3f})", data.dop.hdop, args->maxHDOP());
         return std::nullopt;
     }
 
@@ -62,7 +69,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
         point.m_timestamp += std::chrono::seconds{data.fix.time.tv_sec};
         point.m_timestamp += std::chrono::microseconds{data.fix.time.tv_nsec / 1000};
     } else {
-        Logger::debug("fix.time is required");
+        Logger::debug("Point rejected: fix.time is required");
         return std::nullopt;
     }
 
@@ -70,11 +77,15 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data) {
         point.m_latitude = data.fix.latitude;
         point.m_longitude = data.fix.longitude;
     } else {
-        Logger::debug("fix.latitude and fix.longitude are required");
+        Logger::debug("Point rejected: fix.latitude and fix.longitude are required");
         return std::nullopt;
     }
 
-    if ((data.set & ALTITUDE_SET) && std::isfinite(data.fix.altMSL)) {
+    if (std::isfinite(data.dop.vdop) && data.dop.vdop > args->maxVDOP()) {
+        Logger::debug("Point altitude discarded: Bad VDOP (has {:.3f}, max {:.3f})", data.dop.vdop, args->maxVDOP());
+    } else if ((data.set & ALTITUDE_SET) && std::isfinite(data.fix.altMSL)) {
+        // discard on bad VDOP
+
         // altidude above mean sea level
         // this is what Owntracks uses as well
         // https://owntracks.org/booklet/tech/json/#_typelocation

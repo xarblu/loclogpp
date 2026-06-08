@@ -33,6 +33,10 @@ class ArgParser {
     double m_requiredAccuracyMeters{200.0};
     double m_requiredDistanceMeters{5.0};
     int m_maxSpeedMetersPerSecond{100};
+    // these defaults come from what this site considers "good"
+    // https://www.marinepublic.com/blogs/training/649465-hdop-pdop-gdop-gps-accuracy-multipath-effects
+    double m_maxHDOP{5.0};
+    double m_maxVDOP{3.0};
 
     /**
      * Print help message
@@ -65,6 +69,8 @@ public:
     double requiredAccuracyMeters() const { return m_requiredAccuracyMeters; }
     double requiredDistanceMeters() const { return m_requiredDistanceMeters; }
     int maxSpeedMetersPerSecond() const { return m_maxSpeedMetersPerSecond; }
+    double maxHDOP() const { return m_maxHDOP; }
+    double maxVDOP() const { return m_maxVDOP; }
 };
 
 } //namespace LocLogPP

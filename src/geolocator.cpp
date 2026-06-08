@@ -286,7 +286,7 @@ int LocLogPP::Geolocator::trackInternal() {
                 return 1;
             }
 
-            std::optional<Point> newPoint = Point::fromGPSD(*data);
+            std::optional<Point> newPoint = Point::fromGPSD(*data, m_args.get());
             if (!newPoint) {
                 Logger::debug("Ignoring GPSD read without valid point data");
                 continue;
