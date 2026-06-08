@@ -32,7 +32,8 @@ void LocLogPP::ArgParser::printHelp() {
               << "  --max-speed             Maximum average speed between points in meters per second (default: " << defaults.maxSpeedMetersPerSecond() << ")\n"
               << "  --max-hdop              Maximum Horizontal Dilution of Precision (default: " << defaults.maxHDOP() << ")\n"
               << "  --max-vdop              Maximum Vertical Dilution of Precision (default: " << defaults.maxVDOP() << ")\n"
-              << "                          Only discards altitude information, the point is still recorded unless filtered otherwise\n"
+              << "                          Only discards altitude information, the point is still\n"
+              << "                          recorded unless filtered otherwise\n"
               << "\n"
               << "OPERATION_OPTs for export:\n";
 }
