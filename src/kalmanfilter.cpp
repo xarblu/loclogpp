@@ -8,7 +8,7 @@ double LocLogPP::KalmanFilter::update(double measurement, double dop) {
 
     // CORRECT step
 
-    // dynamic error absed on receiver dilution of precision
+    // dynamic error based on receiver dilution of precision
     double adjustedSensorNoise{m_sensorNoiseCovariance * dop * dop};
 
     m_kalmanGain = m_errorCovariance / (m_errorCovariance + adjustedSensorNoise);
