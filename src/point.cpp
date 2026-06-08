@@ -25,7 +25,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
         return std::nullopt;
     }
 
-    std::string fixModeStr;
+    const char* fixModeStr;
     switch (data.fix.mode) {
         case MODE_NOT_SEEN:
             fixModeStr = "MODE_NOT_SEEN";
@@ -43,10 +43,9 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
             fixModeStr = "UNKNOWN";
             break;
     }
-    Logger::debug("fix.mode is {}", fixModeStr);
 
     if (data.fix.mode < MODE_2D) {
-        Logger::debug("Point rejected: fix.mode must be at least MODE_2D");
+        Logger::debug("Point rejected: fix.mode must be at least MODE_2D (is {})", fixModeStr);
         return std::nullopt;
     }
 
