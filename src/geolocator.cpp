@@ -93,15 +93,12 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::preFilterPoint(Point point)
             speed = distance / timeDelta;
         }
 
-        // we'll cap the speed at 1000 km/h
-        // which is almost the speed of sound (1235 km/h)
-        // and probably reasonably
-        constexpr double limit{1000.0 / 3.6};
+        const double limit = m_args->maxSpeedMetersPerSecond();
         if (speed > limit) {
-            Logger::debug("Point jumped at unreasonable speed ({:.3f} m in {:.3f} s, avg. speed: {:.3f} m/s, limit: {:.3f} m/s)", distance, timeDelta, speed, limit);
+            Logger::debug("Point jumped at speed above maximum ({:.3f} m in {:.3f} s, avg. speed: {:.3f} m/s, limit: {:.3f} m/s)",
+                          distance, timeDelta, speed, limit);
             return std::nullopt;
         }
-        Logger::debug("Point jumped within reasonable speed ({:.3f} m in {:.3f} s, avg. speed: {:.3f} m/s, limit: {:.3f} m/s)", distance, timeDelta, speed, limit);
     }
 
     return point;

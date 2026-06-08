@@ -32,6 +32,7 @@ class ArgParser {
     int m_stationaryHeartbeatSeconds{300};
     double m_requiredAccuracyMeters{200.0};
     double m_requiredDistanceMeters{5.0};
+    int m_maxSpeedMetersPerSecond{100};
 
     /**
      * Print help message
@@ -63,6 +64,7 @@ public:
     int stationaryHeartbeatSeconds() const { return m_stationaryHeartbeatSeconds; }
     double requiredAccuracyMeters() const { return m_requiredAccuracyMeters; }
     double requiredDistanceMeters() const { return m_requiredDistanceMeters; }
+    int maxSpeedMetersPerSecond() const { return m_maxSpeedMetersPerSecond; }
 };
 
 } //namespace LocLogPP

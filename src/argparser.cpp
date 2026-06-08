@@ -29,6 +29,7 @@ void LocLogPP::ArgParser::printHelp() {
               << "  --stationary-heartbeat  Point interval while stationary (default: " << defaults.stationaryHeartbeatSeconds() << ")\n"
               << "  --required-accuracy     Minimum accuracy required in meters (default: " << defaults.requiredAccuracyMeters() << ")\n"
               << "  --required-distance     Minimum distance required between points in meters (default: " << defaults.requiredDistanceMeters() << ")\n"
+              << "  --max-speed             Maximum average speed between points in meters per second (default: " << defaults.maxSpeedMetersPerSecond() << ")\n"
               << "\n"
               << "OPERATION_OPTs for export:\n";
 }
@@ -184,6 +185,20 @@ std::pair<int, std::shared_ptr<LocLogPP::ArgParser>> LocLogPP::ArgParser::parse(
                             continue;
                         } catch(std::invalid_argument e) {
                             Logger::error("Bad float value for: {}", arg);
+                            return {1, nullptr};
+                        }
+                    }
+
+                    if (arg == "--max-speed") {
+                        if (i + 1 >= argc) {
+                            Logger::error("Argument requires value: {}", arg);
+                            return {1, nullptr};
+                        }
+                        try {
+                            parser->m_maxSpeedMetersPerSecond = std::stoi(std::string{argv[++i]});
+                            continue;
+                        } catch(std::invalid_argument e) {
+                            Logger::error("Bad interger value for: {}", arg);
                             return {1, nullptr};
                         }
                     }
