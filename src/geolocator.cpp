@@ -349,6 +349,8 @@ int LocLogPP::Geolocator::trackInternal() {
         // throw them to Kalman for smoothing
         applyKalmanFilters(*point);
 
+        Logger::debug("Point after filters:\n{}", point->toString());
+
         evaluateState(*point);
 
         // seconds since last returned point
