@@ -4,6 +4,7 @@
 #include "database.hpp"
 #include "logger.hpp"
 #include "point.hpp"
+#include "kalmanfilter.hpp"
 
 #include <gps.h>
 #include <libgpsmm.h>
@@ -119,6 +120,29 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
     }
 
     return point;
+}
+
+void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
+    if (!m_filters.lat) {
+        m_filters.lat = std::make_unique<KalmanFilter>(point.latitude());
+    } else {
+        point.setLatitude(m_filters.lat->update(point.latitude(), point.hdop()));
+    }
+
+    if (!m_filters.lon) {
+        m_filters.lon = std::make_unique<KalmanFilter>(point.latitude());
+    } else {
+        point.setLongitude(m_filters.lon->update(point.latitude(), point.hdop()));
+    }
+
+    // altitude is optional
+    if (point.altitude() && point.vdop()) {
+        if (!m_filters.alt) {
+            m_filters.alt = std::make_unique<KalmanFilter>(*point.altitude());
+        } else {
+            point.setAltitude(m_filters.lon->update(*point.altitude(), *point.vdop()));
+        }
+    }
 }
 
 std::optional<LocLogPP::Point> LocLogPP::Geolocator::pastPointsCenter() const {
@@ -321,7 +345,11 @@ int LocLogPP::Geolocator::trackInternal() {
             continue;
         }
 
-        evaluateState(point.value());
+        // after our basic "bad points" filter
+        // throw them to Kalman for smoothing
+        applyKalmanFilters(*point);
+
+        evaluateState(*point);
 
         // seconds since last returned point
         auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - m_lastPointTime).count();

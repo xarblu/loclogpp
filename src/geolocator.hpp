@@ -1,6 +1,7 @@
 #pragma once
 
 #include "argparser.hpp"
+#include "kalmanfilter.hpp"
 #include "point.hpp"
 
 #include <libgpsmm.h>
@@ -14,6 +15,7 @@
 namespace LocLogPP {
 
 class Database;
+class KalmanFilter;
 
 class Geolocator {
 public:
@@ -50,6 +52,17 @@ private:
     State m_state{State::STATIONARY};
 
     /**
+     * Kalman filters for lat, lon, alt
+     *
+     * lazily initialized and seeded by the received point
+     */
+    struct {
+        std::unique_ptr<KalmanFilter> lat{nullptr};
+        std::unique_ptr<KalmanFilter> lon{nullptr};
+        std::unique_ptr<KalmanFilter> alt{nullptr};
+    } m_filters;
+
+    /**
      * Only allow creation with create()
      */
     Geolocator() = default;
@@ -72,6 +85,11 @@ private:
      */
     std::optional<Point> preFilterPoint(Point point) const;
     std::optional<Point> filterPoint(Point point) const;
+
+    /**
+     * Apply the Kalman filters for lat, lon, alt on the given Point
+     */
+    void applyKalmanFilters(Point &point);
 
     /**
      * Get center of m_pastPoints, the Point timestamp

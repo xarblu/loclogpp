@@ -3,6 +3,7 @@ add_executable(${PROJECT_NAME}
     database.cpp
     exporter.cpp
     geolocator.cpp
+    kalmanfilter.cpp
     logger.cpp
     main.cpp
     point.cpp

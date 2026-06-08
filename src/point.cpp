@@ -56,45 +56,57 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
         return std::nullopt;
     }
 
-    // reject bad HDOP
-    if (std::isfinite(data.dop.hdop) && data.dop.hdop > args->maxHDOP()) {
-        Logger::debug("Point rejected: Bad HDOP (has {:.3f}, max {:.3f})", data.dop.hdop, args->maxHDOP());
-        return std::nullopt;
-    }
-
     Point point{};
 
-    if (data.set & TIME_SET) {
-        point.m_timestamp += std::chrono::seconds{data.fix.time.tv_sec};
-        point.m_timestamp += std::chrono::microseconds{data.fix.time.tv_nsec / 1000};
-    } else {
+    // TIMESTAMP
+    if (!(data.set & TIME_SET)) {
         Logger::debug("Point rejected: fix.time is required");
         return std::nullopt;
     }
+    point.m_timestamp += std::chrono::seconds{data.fix.time.tv_sec};
+    point.m_timestamp += std::chrono::microseconds{data.fix.time.tv_nsec / 1000};
 
-    if ((data.set & LATLON_SET) && std::isfinite(data.fix.latitude) && std::isfinite(data.fix.longitude)) {
-        point.m_latitude = data.fix.latitude;
-        point.m_longitude = data.fix.longitude;
-    } else {
+    // HDOP
+    if (!std::isfinite(data.dop.hdop)) {
+        Logger::debug("Point rejected: dop.hdop is required");
+        return std::nullopt;
+    }
+    if (data.dop.hdop > args->maxHDOP()) {
+        Logger::debug("Point rejected: Bad HDOP (has {:.3f}, max {:.3f})", data.dop.hdop, args->maxHDOP());
+        return std::nullopt;
+    }
+    point.m_hdop = data.dop.hdop;
+
+    // LAT + LON
+    if (!(data.set & LATLON_SET) && std::isfinite(data.fix.latitude) && std::isfinite(data.fix.longitude)) {
         Logger::debug("Point rejected: fix.latitude and fix.longitude are required");
         return std::nullopt;
     }
+    point.m_latitude = data.fix.latitude;
+    point.m_longitude = data.fix.longitude;
 
-    if (std::isfinite(data.dop.vdop) && data.dop.vdop > args->maxVDOP()) {
-        Logger::debug("Point altitude discarded: Bad VDOP (has {:.3f}, max {:.3f})", data.dop.vdop, args->maxVDOP());
-    } else if ((data.set & ALTITUDE_SET) && std::isfinite(data.fix.altMSL)) {
-        // discard on bad VDOP
-
+    // ALT + VDOP
+    if ((data.set & ALTITUDE_SET) && std::isfinite(data.fix.altMSL)) {
         // altidude above mean sea level
         // this is what Owntracks uses as well
         // https://owntracks.org/booklet/tech/json/#_typelocation
         point.m_altitude = data.fix.altMSL;
+
+        if (std::isfinite(data.dop.vdop)) {
+            point.m_vdop = data.dop.vdop;
+        }
+    }
+    if (std::isfinite(data.dop.vdop) && data.dop.vdop > args->maxVDOP()) {
+        Logger::debug("Point altitude discarded: Bad VDOP (has {:.3f}, max {:.3f})", data.dop.vdop, args->maxVDOP());
+        point.m_altitude.reset();
     }
 
+    // SPEED
     if ((data.set & SPEED_SET) && std::isfinite(data.fix.speed)) {
         point.m_speed = data.fix.speed;
     }
 
+    // ACCURACY
     if ((data.set & HERR_SET) && std::isfinite(data.fix.eph)) {
         // only horizontal accuracy for now
         point.m_accuracy = data.fix.eph;

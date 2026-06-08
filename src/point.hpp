@@ -12,12 +12,17 @@ namespace LocLogPP {
 class ArgParser;
 
 class Point {
+    // exported values
     std::chrono::system_clock::time_point m_timestamp{};
     float m_latitude;
     float m_longitude;
     std::optional<float> m_speed{std::nullopt};
     std::optional<float> m_accuracy{std::nullopt};
     std::optional<float> m_altitude{std::nullopt};
+
+    // only used internally
+    double m_hdop{0.0};
+    std::optional<double> m_vdop{0.0}; // tied to m_altitude
 
     // only allow default construction via helpers
     Point() = default;
@@ -64,6 +69,15 @@ public:
     std::optional<float> speed() const { return m_speed; }
     std::optional<float> accuracy() const { return m_accuracy; }
     std::optional<float> altitude() const { return m_altitude; }
+    double hdop() const { return m_hdop; }
+    std::optional<double> vdop() const { return m_vdop; }
+
+    /**
+     * Setters
+     */
+    void setLatitude(float value) { m_latitude = value; }
+    void setLongitude(float value) { m_longitude = value; }
+    void setAltitude(float value) { m_altitude = value; }
 
     /**
      * Get the distance between this and another point
