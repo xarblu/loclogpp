@@ -66,16 +66,17 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
     point.m_timestamp += std::chrono::seconds{data.fix.time.tv_sec};
     point.m_timestamp += std::chrono::microseconds{data.fix.time.tv_nsec / 1000};
 
-    // HDOP
-    if (!std::isfinite(data.dop.hdop)) {
-        Logger::debug("Point rejected: dop.hdop is required");
+    // {X,Y,H}DOP
+    if (!(std::isfinite(data.dop.xdop) && std::isfinite(data.dop.ydop) && std::isfinite(data.dop.hdop))) {
+        Logger::debug("Point rejected: dop.xdop, dop.ydop and dop.hdop are required");
         return std::nullopt;
     }
     if (data.dop.hdop > args->maxHDOP()) {
         Logger::debug("Point rejected: Bad HDOP (has {:.3f}, max {:.3f})", data.dop.hdop, args->maxHDOP());
         return std::nullopt;
     }
-    point.m_hdop = data.dop.hdop;
+    point.m_xdop = data.dop.xdop;
+    point.m_ydop = data.dop.ydop;
 
     // LAT + LON
     if (!(data.set & LATLON_SET) && std::isfinite(data.fix.latitude) && std::isfinite(data.fix.longitude)) {
@@ -187,7 +188,8 @@ std::string LocLogPP::Point::toString() const {
         "altitude: {}\n" 
         "speed: {}\n"
         "accuracy: {}\n"
-        "hdop: {}\n"
+        "xdop: {}\n"
+        "ydop: {}\n"
         "vdop: {}",
         m_timestamp,
         m_latitude,
@@ -195,7 +197,8 @@ std::string LocLogPP::Point::toString() const {
         m_altitude.value_or(NAN),
         m_speed.value_or(NAN),
         m_accuracy.value_or(NAN),
-        m_hdop,
+        m_xdop,
+        m_ydop,
         m_vdop.value_or(NAN));
 }
 

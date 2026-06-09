@@ -21,7 +21,8 @@ class Point {
     std::optional<float> m_altitude{std::nullopt};
 
     // only used internally
-    double m_hdop{0.0};
+    double m_xdop{0.0};
+    double m_ydop{0.0};
     std::optional<double> m_vdop{std::nullopt}; // tied to m_altitude
 
     // only allow default construction via helpers
@@ -69,7 +70,8 @@ public:
     std::optional<float> speed() const { return m_speed; }
     std::optional<float> accuracy() const { return m_accuracy; }
     std::optional<float> altitude() const { return m_altitude; }
-    double hdop() const { return m_hdop; }
+    double xdop() const { return m_xdop; }
+    double ydop() const { return m_ydop; }
     std::optional<double> vdop() const { return m_vdop; }
 
     /**
