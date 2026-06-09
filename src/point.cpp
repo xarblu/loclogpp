@@ -52,7 +52,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
     // reject low satellite count
     constexpr int satellitesRequired{5};
     if (data.satellites_used < satellitesRequired) {
-        Logger::debug("Point rejected: Low satellite count (has {}, want >{})", data.satellites_used, satellitesRequired);
+        Logger::debug("Point rejected: Low satellite count (has {}, min {})", data.satellites_used, satellitesRequired);
         return std::nullopt;
     }
 
