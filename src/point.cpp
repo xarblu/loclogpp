@@ -66,14 +66,17 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
     point.m_timestamp += std::chrono::seconds{data.fix.time.tv_sec};
     point.m_timestamp += std::chrono::microseconds{data.fix.time.tv_nsec / 1000};
 
-    // {X,Y,H}DOP
-    if (!(std::isfinite(data.dop.xdop) && std::isfinite(data.dop.ydop) && std::isfinite(data.dop.hdop))) {
-        Logger::debug("Point rejected: dop.xdop, dop.ydop and dop.hdop are required");
+    // {X,Y}DOP
+    if (!(std::isfinite(data.dop.xdop) && std::isfinite(data.dop.ydop))) {
+        Logger::debug("Point rejected: dop.xdop and dop.ydop are required");
         return std::nullopt;
     }
-    // TODO: check both {x,y}dop instead?
-    if (data.dop.hdop > args->maxHDOP()) {
-        Logger::debug("Point rejected: Bad HDOP (has {:.3f}, max {:.3f})", data.dop.hdop, args->maxHDOP());
+    if (data.dop.xdop > args->maxHDOP()) {
+        Logger::debug("Point rejected: Bad XDOP (has {:.3f}, max {:.3f})", data.dop.xdop, args->maxHDOP());
+        return std::nullopt;
+    }
+    if (data.dop.ydop > args->maxHDOP()) {
+        Logger::debug("Point rejected: Bad YDOP (has {:.3f}, max {:.3f})", data.dop.ydop, args->maxHDOP());
         return std::nullopt;
     }
     point.m_xdop = data.dop.xdop;

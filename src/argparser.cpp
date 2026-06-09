@@ -33,6 +33,7 @@ void LocLogPP::ArgParser::printHelp() {
               << "                          Discards entire point. Usually points with negative altitude are just garbage (even with reasonable DOP)\n"
               << "  --max-speed             Maximum average speed between points in meters per second (default: " << defaults.maxSpeedMetersPerSecond() << ")\n"
               << "  --max-hdop              Maximum Horizontal Dilution of Precision (default: " << defaults.maxHDOP() << ")\n"
+              << "                          Note: This actually filters on both X and Y DOP components individually\n"
               << "  --max-vdop              Maximum Vertical Dilution of Precision (default: " << defaults.maxVDOP() << ")\n"
               << "                          Only discards altitude information, the point is still\n"
               << "                          recorded unless filtered otherwise\n"
