@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-double LocLogPP::KalmanFilter::update(double measurement, double dop,  std::chrono::system_clock::time_point timestamp) {
+double LocLogPP::KalmanFilter::update(double measurement, double dop, std::chrono::system_clock::time_point timestamp) {
     // PREDICT step
     // since were filtering in 1D without any speed info
     // we'll predict the next state to match the current one
@@ -18,7 +18,7 @@ double LocLogPP::KalmanFilter::update(double measurement, double dop,  std::chro
     // CORRECT step
 
     // dynamic error based on receiver dilution of precision
-    double adjustedSensorNoise{m_sensorNoiseCovariance * dop * dop};
+    const double adjustedSensorNoise{m_sensorNoiseCovariance * dop * dop};
 
     m_kalmanGain = m_errorCovariance / (m_errorCovariance + adjustedSensorNoise);
     
