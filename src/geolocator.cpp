@@ -70,16 +70,6 @@ std::unique_ptr<LocLogPP::Geolocator> LocLogPP::Geolocator::create(std::shared_p
 std::optional<LocLogPP::Point> LocLogPP::Geolocator::preFilterPoint(Point point) const {
     Logger::debug("Applying point pre-filter");
 
-    // basic accuracy filter
-    if (point.accuracy()) {
-        auto accuracy = point.accuracy().value();
-        if (accuracy > m_args->requiredAccuracyMeters()) {
-            Logger::debug("Point accuracy insufficient ({:.3f} m)", accuracy);
-            return std::nullopt;
-        }
-        Logger::debug("Point accuracy sufficient ({:.3f} m)", accuracy);
-    }
-
     // filter excessive jumps
     if (!m_pastPoints.empty()) {
         const auto &lastPoint = m_pastPoints.back();

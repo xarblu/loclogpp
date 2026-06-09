@@ -119,6 +119,11 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
     if ((data.set & HERR_SET) && std::isfinite(data.fix.eph)) {
         // only horizontal accuracy for now
         point.m_accuracy = data.fix.eph;
+
+        if (*point.m_accuracy > args->requiredAccuracyMeters()) {
+            Logger::debug("Point rejected: Accuracy insufficient (has {:.3f}, min {:.3f})", *point.m_accuracy, args->requiredAccuracyMeters());
+            return std::nullopt;
+        }
     }
 
     return point;
