@@ -4,33 +4,57 @@
 
 namespace LocLogPP {
 /**
- * Basic 1D Kalman filter for Geolocator
+ * Basic 2D Kalman filter for Geolocator
  * to be used on individual Point location components
  * (mainly lat, lon, alt)
  */
 class KalmanFilter {
-    // kalman
-    double m_processNoiseCovariance{};
-    double m_sensorNoiseCovariance{};
-    double m_state{0.0};
-    double m_errorCovariance{1.0};
-    double m_kalmanGain{};
+    struct {
+        double pos{};
+        double vel{};
+    }  m_processNoiseCovariance;
 
-    // extras
+    double m_sensorNoiseCovariance{};
+
+    struct State {
+        double pos{0.0};
+        double vel{0.0};
+    } m_state;
+
+    struct ErrorCovariance {
+        // pos uncertainty
+        double p00{1.0};
+        // correlations
+        double p01{0.0};
+        double p10{0.0};
+        // vel uncertainty
+        double p11{1.0};
+    } m_errorCovariance;
+
     std::chrono::system_clock::time_point m_lastMeasurement{};
 public:
     /**
      * seed - initial state taken as-is
-     * processNoiseCovariance - lower -> smoother path, but slower reaction
-     * sensorNoiseCovariance - higher -> filter larger spikes
+     *
+     * processNoiseCovariancePos (~ position jitter)
+     * adjust this up to allow sharper turns or down for smoother/straighter lines
+     * should be increased when cutting too many curves/corners
+     *
+     * processNoiseCovarianceVel (~ inertia of the movement)
+     * adjust this up to adjust speed of state faster or down to adjust slower
+     * should be increased when overshooting curves/corners
+     *
+     * sensorNoiseCovariance
+     * higher -> filter larger spikes
      */
-    explicit KalmanFilter(double seed,
+    explicit KalmanFilter(double seedPos,
                           std::chrono::system_clock::time_point seedTime,
-                          double processNoiseCovariance = 0.001,
+                          double processNoiseCovariancePos = 0.00001,
+                          double processNoiseCovarianceVel = 0.000001,
                           double sensorNoiseCovariance = 0.005)
-        : m_state{seed}
+        : m_state{.pos = seedPos, .vel = 0.0}
         , m_lastMeasurement{seedTime}
-        , m_processNoiseCovariance{processNoiseCovariance}
+        , m_processNoiseCovariance{.pos = processNoiseCovariancePos, .vel = processNoiseCovarianceVel}
         , m_sensorNoiseCovariance{sensorNoiseCovariance}
     {}
 

@@ -3,28 +3,59 @@
 #include <chrono>
 
 double LocLogPP::KalmanFilter::update(double measurement, double dop, std::chrono::system_clock::time_point timestamp) {
-    // PREDICT step
-    // since were filtering in 1D without any speed info
-    // we'll predict the next state to match the current one
-    
+    // temporaries for "atomic" struct swaps
+    ErrorCovariance tempErrorCovariance;
+    State tempState;
+
     // scale uncertainty with time between measurements
     // to avoid "overcorrecting" future points after a blackout
     double deltaTime = std::chrono::duration<double>{timestamp - m_lastMeasurement}.count();
     if (deltaTime <= 0.0) deltaTime = 0.1;
     m_lastMeasurement = timestamp;
 
-    m_errorCovariance += m_processNoiseCovariance * deltaTime;
+    // PREDICT step
+
+    // predict state transition
+    m_state.pos = m_state.pos + m_state.vel * deltaTime;
+
+    // predict uncertainty
+    tempErrorCovariance = {
+        .p00 = m_errorCovariance.p00 + (m_errorCovariance.p01 + m_errorCovariance.p10) * deltaTime + m_errorCovariance.p11 * deltaTime * deltaTime + m_processNoiseCovariance.pos * deltaTime,
+        .p01 = m_errorCovariance.p01 + m_errorCovariance.p11 * deltaTime,
+        .p10 = m_errorCovariance.p10 + m_errorCovariance.p11 * deltaTime,
+        .p11 = m_errorCovariance.p11 + m_processNoiseCovariance.vel * deltaTime,
+    };
+    m_errorCovariance = tempErrorCovariance;
+
 
     // CORRECT step
 
     // dynamic error based on receiver dilution of precision
     const double adjustedSensorNoise{m_sensorNoiseCovariance * dop * dop};
 
-    m_kalmanGain = m_errorCovariance / (m_errorCovariance + adjustedSensorNoise);
+    struct {
+        double pos;
+        double vel;
+    } kalmanGain = {
+        .pos = m_errorCovariance.p00 / (m_errorCovariance.p00 + adjustedSensorNoise),
+        .vel = m_errorCovariance.p10 / (m_errorCovariance.p00 + adjustedSensorNoise),
+    };
     
-    m_state += m_kalmanGain * (measurement - m_state);
+    // correct state
+    tempState = {
+        .pos = m_state.pos + kalmanGain.pos * (measurement - m_state.pos),
+        .vel = m_state.vel + kalmanGain.vel * (measurement - m_state.pos),
+    };
+    m_state = tempState;
 
-    m_errorCovariance = (1.0 - m_kalmanGain) * m_errorCovariance;
+    // update uncertainty
+    tempErrorCovariance = {
+        .p00 = (1.0 - kalmanGain.pos) * m_errorCovariance.p00,
+        .p01 = (1.0 - kalmanGain.pos) * m_errorCovariance.p01,
+        .p10 = m_errorCovariance.p10 - kalmanGain.vel * m_errorCovariance.p00,
+        .p11 = m_errorCovariance.p11 - kalmanGain.vel * m_errorCovariance.p01,
+    };
+    m_errorCovariance = tempErrorCovariance;
 
-    return m_state;
+    return m_state.pos;
 }
