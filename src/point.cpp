@@ -71,6 +71,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
         Logger::debug("Point rejected: dop.xdop, dop.ydop and dop.hdop are required");
         return std::nullopt;
     }
+    // TODO: check both {x,y}dop instead?
     if (data.dop.hdop > args->maxHDOP()) {
         Logger::debug("Point rejected: Bad HDOP (has {:.3f}, max {:.3f})", data.dop.hdop, args->maxHDOP());
         return std::nullopt;
