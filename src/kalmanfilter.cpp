@@ -9,11 +9,11 @@ double LocLogPP::KalmanFilter::update(double measurement, double dop, std::chron
     
     // scale uncertainty with time between measurements
     // to avoid "overcorrecting" future points after a blackout
-    const auto deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(timestamp - m_lastMeasurement);
-    double deltaTimeSeconds = static_cast<double>(deltaTime.count()) / 1000.0;
-    if (deltaTimeSeconds <= 0.0) deltaTimeSeconds = 1.0;
+    double deltaTime = std::chrono::duration<double>{timestamp - m_lastMeasurement}.count();
+    if (deltaTime <= 0.0) deltaTime = 1.0;
+    m_lastMeasurement = timestamp;
 
-    m_errorCovariance += m_processNoiseCovariance * deltaTimeSeconds;
+    m_errorCovariance += m_processNoiseCovariance * deltaTime;
 
     // CORRECT step
 
