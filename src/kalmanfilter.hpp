@@ -26,7 +26,7 @@ public:
      */
     explicit KalmanFilter(double seed,
                           std::chrono::system_clock::time_point seedTime,
-                          double processNoiseCovariance = 0.0001,
+                          double processNoiseCovariance = 0.001,
                           double sensorNoiseCovariance = 0.005)
         : m_state{seed}
         , m_lastMeasurement{seedTime}
