@@ -114,23 +114,23 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
 
 void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
     if (!m_filters.lat) {
-        m_filters.lat = std::make_unique<KalmanFilter>(point.latitude());
+        m_filters.lat = std::make_unique<KalmanFilter>(point.latitude(), point.timestamp());
     } else {
-        point.setLatitude(m_filters.lat->update(point.latitude(), point.ydop()));
+        point.setLatitude(m_filters.lat->update(point.latitude(), point.ydop(), point.timestamp()));
     }
 
     if (!m_filters.lon) {
-        m_filters.lon = std::make_unique<KalmanFilter>(point.longitude());
+        m_filters.lon = std::make_unique<KalmanFilter>(point.longitude(), point.timestamp());
     } else {
-        point.setLongitude(m_filters.lon->update(point.longitude(), point.xdop()));
+        point.setLongitude(m_filters.lon->update(point.longitude(), point.xdop(), point.timestamp()));
     }
 
     // altitude is optional
     if (point.altitude() && point.vdop()) {
         if (!m_filters.alt) {
-            m_filters.alt = std::make_unique<KalmanFilter>(*point.altitude());
+            m_filters.alt = std::make_unique<KalmanFilter>(*point.altitude(), point.timestamp());
         } else {
-            point.setAltitude(m_filters.alt->update(*point.altitude(), *point.vdop()));
+            point.setAltitude(m_filters.alt->update(*point.altitude(), *point.vdop(), point.timestamp()));
         }
     }
 }

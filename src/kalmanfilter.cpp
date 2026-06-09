@@ -1,10 +1,19 @@
 #include "kalmanfilter.hpp"
 
-double LocLogPP::KalmanFilter::update(double measurement, double dop) {
+#include <chrono>
+
+double LocLogPP::KalmanFilter::update(double measurement, double dop,  std::chrono::system_clock::time_point timestamp) {
     // PREDICT step
     // since were filtering in 1D without any speed info
     // we'll predict the next state to match the current one
-    m_errorCovariance += m_processNoiseCovariance;
+    
+    // scale uncertainty with time between measurements
+    // to avoid "overcorrecting" future points after a blackout
+    const auto deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(timestamp - m_lastMeasurement);
+    double deltaTimeSeconds = static_cast<double>(deltaTime.count()) / 1000.0;
+    if (deltaTimeSeconds <= 0.0) deltaTimeSeconds = 1.0;
+
+    m_errorCovariance += m_processNoiseCovariance * deltaTimeSeconds;
 
     // CORRECT step
 
