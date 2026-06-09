@@ -29,6 +29,8 @@ void LocLogPP::ArgParser::printHelp() {
               << "  --stationary-heartbeat  Point interval while stationary (default: " << defaults.stationaryHeartbeatSeconds() << ")\n"
               << "  --required-accuracy     Minimum accuracy required in meters (default: " << defaults.requiredAccuracyMeters() << ")\n"
               << "  --required-distance     Minimum distance required between points in meters (default: " << defaults.requiredDistanceMeters() << ")\n"
+              << "  --min-altitude          Minimum altitude required (if provided by GPSD) in meters (default: " << defaults.minAltitudeMeters() << ")\n"
+              << "                          Discards entire point. Usually points with negative altitude are just garbage (even with reasonable DOP)\n"
               << "  --max-speed             Maximum average speed between points in meters per second (default: " << defaults.maxSpeedMetersPerSecond() << ")\n"
               << "  --max-hdop              Maximum Horizontal Dilution of Precision (default: " << defaults.maxHDOP() << ")\n"
               << "  --max-vdop              Maximum Vertical Dilution of Precision (default: " << defaults.maxVDOP() << ")\n"
@@ -186,6 +188,20 @@ std::pair<int, std::shared_ptr<LocLogPP::ArgParser>> LocLogPP::ArgParser::parse(
                         }
                         try {
                             parser->m_requiredDistanceMeters = std::stod(std::string{argv[++i]});
+                            continue;
+                        } catch(std::invalid_argument e) {
+                            Logger::error("Bad float value for: {}", arg);
+                            return {1, nullptr};
+                        }
+                    }
+
+                    if (arg == "--min-altitude") {
+                        if (i + 1 >= argc) {
+                            Logger::error("Argument requires value: {}", arg);
+                            return {1, nullptr};
+                        }
+                        try {
+                            parser->m_minAltitudeMeters = std::stod(std::string{argv[++i]});
                             continue;
                         } catch(std::invalid_argument e) {
                             Logger::error("Bad float value for: {}", arg);

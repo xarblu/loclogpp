@@ -100,6 +100,10 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
         Logger::debug("Point altitude discarded: Bad VDOP (has {:.3f}, max {:.3f})", data.dop.vdop, args->maxVDOP());
         point.m_altitude.reset();
     }
+    if (point.m_altitude && *point.m_altitude < args->minAltitudeMeters()) {
+        Logger::debug("Point rejected: Altitude below minimum (has {:.3f}, min {:.3f})", *point.m_altitude, args->minAltitudeMeters());
+        return std::nullopt;
+    }
 
     // SPEED
     if ((data.set & SPEED_SET) && std::isfinite(data.fix.speed)) {
