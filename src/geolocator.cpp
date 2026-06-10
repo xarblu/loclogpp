@@ -142,9 +142,7 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::pastPointsCenter() const {
 
     double latSum{0.0};
     double lonSum{0.0};
-
     double speedSum{0.0};
-    int speedCount{0};
 
     double accSum{0.0};
     int accCount{0};
@@ -155,11 +153,7 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::pastPointsCenter() const {
     for (const auto &point : m_pastPoints) {
         latSum += point.latitude();
         lonSum += point.longitude();
-
-        if (const auto &speed = point.speed()) {
-            speedSum += speed.value();
-            speedCount += 1;
-        }
+        speedSum += point.speed();
 
         if (const auto &acc = point.accuracy()) {
             accSum += acc.value();
@@ -174,11 +168,7 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::pastPointsCenter() const {
 
     const double latMean{latSum / m_pastPoints.size()};
     const double lonMean{lonSum / m_pastPoints.size()};
-
-    std::optional<double> speedMean{};
-    if (speedCount > 0) {
-        speedMean = speedSum / speedCount;
-    }
+    double speedMean{speedSum / m_pastPoints.size()};
 
     std::optional<double> accMean{};
     if (accCount > 0) {
@@ -194,7 +184,7 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::pastPointsCenter() const {
     return Point{m_pastPoints.back().timestamp(),
                  static_cast<float>(latMean),
                  static_cast<float>(lonMean),
-                 speedMean,
+                 static_cast<float>(speedMean),
                  accMean,
                  altMean};
 }
@@ -241,7 +231,7 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     const double oldLatMean{oldLat / oldCount};
     const double oldLonMean{oldLon / oldCount};
 
-    const Point oldCenter{std::chrono::system_clock::now(), static_cast<float>(oldLatMean), static_cast<float>(oldLonMean)};
+    const Point oldCenter{std::chrono::system_clock::now(), static_cast<float>(oldLatMean), static_cast<float>(oldLonMean), 0.0};
 
     // newer cluster
     double newLat{0.0};
@@ -257,7 +247,7 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     const double newLatMean{newLat / newCount};
     const double newLonMean{newLon / newCount};
 
-    const Point newCenter{std::chrono::system_clock::now(), static_cast<float>(newLatMean), static_cast<float>(newLonMean)};
+    const Point newCenter{std::chrono::system_clock::now(), static_cast<float>(newLatMean), static_cast<float>(newLonMean), 0.0};
 
     const double distance = oldCenter.distance(newCenter);
 

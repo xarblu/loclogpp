@@ -90,6 +90,18 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
     point.m_latitude = data.fix.latitude;
     point.m_longitude = data.fix.longitude;
 
+    // SPEED + EPS
+    if (!std::isfinite(data.fix.speed)) {
+        Logger::debug("Point rejected: fix.speed is required");
+        return std::nullopt;
+    }
+    point.m_speed = data.fix.speed;
+    if (!std::isfinite(data.fix.eps)) {
+        Logger::debug("Point rejected: fix.eps is required");
+        return std::nullopt;
+    }
+    point.m_eps = data.fix.eps;
+
     // ALT + VDOP
     if ((data.set & ALTITUDE_SET) && std::isfinite(data.fix.altMSL)) {
         // altidude above mean sea level
@@ -108,11 +120,6 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
     if (point.m_altitude && *point.m_altitude < args->minAltitudeMeters()) {
         Logger::debug("Point rejected: Altitude below minimum (has {:.3f}, min {:.3f})", *point.m_altitude, args->minAltitudeMeters());
         return std::nullopt;
-    }
-
-    // SPEED
-    if ((data.set & SPEED_SET) && std::isfinite(data.fix.speed)) {
-        point.m_speed = data.fix.speed;
     }
 
     // ACCURACY
@@ -194,9 +201,9 @@ std::string LocLogPP::Point::toString() const {
         "timestamp: {:%FT%TZ}\n"
         "latitude: {}\n" 
         "longitude: {}\n"
-        "altitude: {}\n" 
-        "speed: {}\n"
-        "accuracy: {}\n"
+        "altitude: {} m\n" 
+        "speed: {} +- {} m/s\n"
+        "accuracy: {} m\n"
         "xdop: {}\n"
         "ydop: {}\n"
         "vdop: {}",
@@ -204,7 +211,7 @@ std::string LocLogPP::Point::toString() const {
         m_latitude,
         m_longitude,
         m_altitude.value_or(NAN),
-        m_speed.value_or(NAN),
+        m_speed, m_eps,
         m_accuracy.value_or(NAN),
         m_xdop,
         m_ydop,
@@ -217,7 +224,7 @@ std::string LocLogPP::Point::toSQL() const {
     sqlPoint += std::format(" {},", m_latitude);
     sqlPoint += std::format(" {},", m_longitude);
     if (m_speed) {
-        sqlPoint += std::format(" {},", m_speed.value());
+        sqlPoint += std::format(" {},", m_speed);
     } else {
         sqlPoint += std::format(" NULL,");
     }
@@ -245,7 +252,7 @@ std::string LocLogPP::Point::toGPX() const {
         gpx << "        <ele>" << m_altitude.value() << "</ele>\n";
     }
     if (m_speed) {
-        gpx << "        <speed>" << m_speed.value() << "</speed>\n";
+        gpx << "        <speed>" << m_speed << "</speed>\n";
     }
     gpx << "        <time>" << std::format("{:%FT%TZ}", m_timestamp) << "</time>\n";
     gpx << "      </trkpt>\n";

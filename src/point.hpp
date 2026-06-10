@@ -16,13 +16,14 @@ class Point {
     std::chrono::system_clock::time_point m_timestamp{};
     float m_latitude;
     float m_longitude;
-    std::optional<float> m_speed{std::nullopt};
+    float m_speed;
     std::optional<float> m_accuracy{std::nullopt};
     std::optional<float> m_altitude{std::nullopt};
 
     // only used internally
     double m_xdop{0.0};
     double m_ydop{0.0};
+    double m_eps{0.0};
     std::optional<double> m_vdop{std::nullopt}; // tied to m_altitude
 
     // only allow default construction via helpers
@@ -32,7 +33,7 @@ public:
     /**
      * Public constructor only with all valid params
      */
-    explicit Point(std::chrono::system_clock::time_point timestamp, float latitude, float longitude, std::optional<float> speed = std::nullopt, std::optional<float> accuracy = std::nullopt, std::optional<float> altitude = std::nullopt)
+    explicit Point(std::chrono::system_clock::time_point timestamp, float latitude, float longitude, float speed, std::optional<float> accuracy = std::nullopt, std::optional<float> altitude = std::nullopt)
         : m_timestamp{timestamp}
         , m_latitude{latitude}
         , m_longitude{longitude}
@@ -67,11 +68,12 @@ public:
     std::chrono::system_clock::time_point timestamp() const { return m_timestamp; }
     float latitude() const { return m_latitude; }
     float longitude() const { return m_longitude; }
-    std::optional<float> speed() const { return m_speed; }
+    float speed() const { return m_speed; }
     std::optional<float> accuracy() const { return m_accuracy; }
     std::optional<float> altitude() const { return m_altitude; }
     double xdop() const { return m_xdop; }
     double ydop() const { return m_ydop; }
+    double eps() const { return m_eps; }
     std::optional<double> vdop() const { return m_vdop; }
 
     /**
