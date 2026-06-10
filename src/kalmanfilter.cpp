@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-double LocLogPP::KalmanFilter::update(double measurement, double dop, std::chrono::system_clock::time_point timestamp) {
+double LocLogPP::KalmanFilter::update(std::chrono::system_clock::time_point timestamp, double measurement, double errorMultiplier) {
     // temporaries for "atomic" struct swaps
     ErrorCovariance tempErrorCovariance;
     State tempState;
@@ -30,8 +30,8 @@ double LocLogPP::KalmanFilter::update(double measurement, double dop, std::chron
 
     // CORRECT step
 
-    // dynamic error based on receiver dilution of precision
-    const double adjustedSensorNoise{m_sensorNoiseCovariance * dop * dop};
+    // dynamic error based on current sensor errors
+    const double adjustedSensorNoise{m_sensorNoiseCovariance * errorMultiplier};
 
     struct {
         double pos;

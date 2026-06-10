@@ -90,6 +90,14 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
     point.m_latitude = data.fix.latitude;
     point.m_longitude = data.fix.longitude;
 
+    // EP{X,Y}
+    if (!(std::isfinite(data.fix.epx) && std::isfinite(data.fix.epy) && data.fix.epx >= 0.0 && data.fix.epy >= 0.0)) {
+        Logger::debug("Point rejected: fix.epx and fix.epy are required");
+        return std::nullopt;
+    }
+    point.m_epx = data.fix.epx;
+    point.m_epy = data.fix.epy;
+
     // SPEED + EPS
     if (!std::isfinite(data.fix.speed)) {
         Logger::debug("Point rejected: fix.speed is required");
@@ -108,23 +116,31 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
         // this is what Owntracks uses as well
         // https://owntracks.org/booklet/tech/json/#_typelocation
         point.m_altitude = data.fix.altMSL;
-
-        if (std::isfinite(data.dop.vdop)) {
-            point.m_vdop = data.dop.vdop;
-        }
-    }
-    if (std::isfinite(data.dop.vdop) && data.dop.vdop > args->maxVDOP()) {
-        Logger::debug("Point altitude discarded: Bad VDOP (has {:.3f}, max {:.3f})", data.dop.vdop, args->maxVDOP());
-        point.m_altitude.reset();
     }
     if (point.m_altitude && *point.m_altitude < args->minAltitudeMeters()) {
         Logger::debug("Point rejected: Altitude below minimum (has {:.3f}, min {:.3f})", *point.m_altitude, args->minAltitudeMeters());
         return std::nullopt;
     }
+    if (point.m_altitude && !std::isfinite(data.dop.vdop)) {
+        Logger::debug("Point altitude discarded: dop.vdop is required");
+        point.m_altitude.reset();
+    } else {
+        point.m_vdop = data.dop.vdop;
+    }
+    if (point.m_altitude && !std::isfinite(data.fix.epv) && data.fix.epv >= 0.0) {
+        Logger::debug("Point altitude discarded: fix.epv is required");
+        point.m_altitude.reset();
+    } else {
+        point.m_epv = data.fix.epv;
+    }
+    if (point.m_altitude && point.m_vdop > args->maxVDOP()) {
+        Logger::debug("Point altitude discarded: Bad VDOP (has {:.3f}, max {:.3f})", point.m_vdop, args->maxVDOP());
+        point.m_altitude.reset();
+    }
 
     // ACCURACY
-    if ((data.set & HERR_SET) && std::isfinite(data.fix.eph)) {
-        // only horizontal accuracy for now
+    if ((data.set & HERR_SET) && std::isfinite(data.fix.eph) && data.fix.eph >= 0.0) {
+        // basic horizontal accuracy for metadata
         point.m_accuracy = data.fix.eph;
 
         if (*point.m_accuracy > args->requiredAccuracyMeters()) {
@@ -199,23 +215,23 @@ void LocLogPP::Point::update(const Point &other) {
 std::string LocLogPP::Point::toString() const {
     return std::format(
         "timestamp: {:%FT%TZ}\n"
-        "latitude: {}\n" 
-        "longitude: {}\n"
-        "altitude: {} m\n" 
+        "latitude: {} +- {} m\n"
+        "longitude: {} +- {} m\n"
+        "altitude: {} +- {} m\n"
         "speed: {} +- {} m/s\n"
         "accuracy: {} m\n"
         "xdop: {}\n"
         "ydop: {}\n"
         "vdop: {}",
         m_timestamp,
-        m_latitude,
-        m_longitude,
-        m_altitude.value_or(NAN),
+        m_latitude, m_epy,
+        m_longitude, m_epx,
+        m_altitude.value_or(NAN), m_epv,
         m_speed, m_eps,
         m_accuracy.value_or(NAN),
         m_xdop,
         m_ydop,
-        m_vdop.value_or(NAN));
+        m_vdop);
 }
 
 std::string LocLogPP::Point::toSQL() const {

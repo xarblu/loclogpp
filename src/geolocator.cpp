@@ -116,13 +116,15 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
     if (!m_filters.lat) {
         m_filters.lat = std::make_unique<KalmanFilter>(point.latitude(), point.timestamp());
     } else {
-        point.setLatitude(m_filters.lat->update(point.latitude(), point.ydop(), point.timestamp()));
+        const double errorMultiplier{(point.ydop() * point.ydop()) * (1.0 + point.epy() * point.epy()) + (1.0 + point.eps() * point.eps())};
+        point.setLatitude(m_filters.lat->update(point.timestamp(), point.latitude(), errorMultiplier));
     }
 
     if (!m_filters.lon) {
         m_filters.lon = std::make_unique<KalmanFilter>(point.longitude(), point.timestamp());
     } else {
-        point.setLongitude(m_filters.lon->update(point.longitude(), point.xdop(), point.timestamp()));
+        const double errorMultiplier{(point.xdop() * point.xdop()) * (1.0 + point.epx() * point.epx()) + (1.0 + point.eps() * point.eps())};
+        point.setLongitude(m_filters.lon->update(point.timestamp(), point.longitude(), errorMultiplier));
     }
 
     // altitude is optional
@@ -130,7 +132,8 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
         if (!m_filters.alt) {
             m_filters.alt = std::make_unique<KalmanFilter>(*point.altitude(), point.timestamp());
         } else {
-            point.setAltitude(m_filters.alt->update(*point.altitude(), *point.vdop(), point.timestamp()));
+            const double errorMultiplier{(point.vdop() * point.vdop()) * (1.0 + point.epv() * point.epv())};
+            point.setAltitude(m_filters.alt->update(point.timestamp(), *point.altitude(), errorMultiplier));
         }
     }
 }

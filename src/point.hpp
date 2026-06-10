@@ -23,8 +23,13 @@ class Point {
     // only used internally
     double m_xdop{0.0};
     double m_ydop{0.0};
+    double m_epx{0.0};
+    double m_epy{0.0};
     double m_eps{0.0};
-    std::optional<double> m_vdop{std::nullopt}; // tied to m_altitude
+
+    // tied to altitude
+    double m_epv{0.0};
+    double m_vdop{0.0};
 
     // only allow default construction via helpers
     Point() = default;
@@ -73,8 +78,11 @@ public:
     std::optional<float> altitude() const { return m_altitude; }
     double xdop() const { return m_xdop; }
     double ydop() const { return m_ydop; }
+    double epx() const { return m_epx; }
+    double epy() const { return m_epy; }
     double eps() const { return m_eps; }
-    std::optional<double> vdop() const { return m_vdop; }
+    double epv() const { return m_epv; }
+    double vdop() const { return m_vdop; }
 
     /**
      * Setters

@@ -44,14 +44,15 @@ public:
      * adjust this up to adjust speed of state faster or down to adjust slower
      * should be increased when overshooting curves/corners
      *
-     * sensorNoiseCovariance
+     * sensorNoiseCovariance (~ base sensor error under "perfect" conditions)
      * higher -> filter larger spikes
+     * note that this gets multiplied with a dynamic error each update()
      */
     explicit KalmanFilter(double seedPos,
                           std::chrono::system_clock::time_point seedTime,
                           double processNoiseCovariancePos = 0.00001,
                           double processNoiseCovarianceVel = 0.000001,
-                          double sensorNoiseCovariance = 0.005)
+                          double sensorNoiseCovariance = 0.0005)
         : m_state{.pos = seedPos, .vel = 0.0}
         , m_lastMeasurement{seedTime}
         , m_processNoiseCovariance{.pos = processNoiseCovariancePos, .vel = processNoiseCovarianceVel}
@@ -61,14 +62,24 @@ public:
     /**
      * Update the filter and get the latest state
      * 
-     * dop affects how much we trust the given measurement
-     * (larger -> lower trust)
-     * 
      * timestamp affects how much we trust the prediction,
      * depending on how far back the prvious point was
      * (larger -> lower trust)
+     *
+     * measurement is the sensor provided data
+     *
+     * errorMultiplier is multiplied onto m_sensorNoiseCovariance
+     * before calculating Kalman gains and should be made up of:
+     * LAT/LON:
+     *   - {X,Y}DOP
+     *   - EP{X,Y}
+     *   - EPS
+     * ALT:
+     *   - VDOP
+     *   - EPV
+     * (larger -> lower trust)
      */
-    double update(double measurement, double dop, std::chrono::system_clock::time_point timestamp);
+    double update(std::chrono::system_clock::time_point timestamp, double measurement, double errorMultiplier = 1.0);
 };
 
 } // namespace LocLogPP
