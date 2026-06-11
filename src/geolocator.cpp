@@ -370,10 +370,7 @@ int LocLogPP::Geolocator::trackInternal() {
 
             Logger::info("Stationary heartbeat reached");
 
-            // heartbeat ignores filters and intead uses
-            // the center of past points
-            // we just fed evaluateMode so this can't be nullopt
-            point = pastPointsCenter().value();
+            // heartbeat ignores "point frequency filters"
         } else {
             // this is our regular interval while moving
             if (elapsedSeconds < m_args->pointIntervalSeconds()) {
