@@ -22,7 +22,7 @@ class Point {
 
     // track and its uncertainty in degrees relative to true north
     double m_track{0.0};
-    double m_epd{0.0};
+    //double m_epd{0.0};
 
     // only used internally
     double m_xdop{0.0};
@@ -90,7 +90,7 @@ public:
 
     // track and its uncertainty in degrees relative to true north
     double track() const { return m_track; }
-    double epd() const { return m_epd; }
+    //double epd() const { return m_epd; }
 
     /**
      * Setters

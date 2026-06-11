@@ -156,11 +156,11 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
         return std::nullopt;
     }
     point.m_track = data.fix.track;
-    if (!(std::isfinite(data.fix.epd))) {
-        Logger::debug("Point rejected: fix.epd is required");
-        return std::nullopt;
-    }
-    point.m_track = data.fix.epd;
+    //if (!(std::isfinite(data.fix.epd))) {
+    //    Logger::debug("Point rejected: fix.epd is required");
+    //    return std::nullopt;
+    //}
+    //point.m_epd = data.fix.epd;
 
     return point;
 }
@@ -230,14 +230,14 @@ std::string LocLogPP::Point::toString() const {
         "longitude: {} deg +- {} m (xdop: {})\n"
         "altitude: {} m +- {} m (vdop: {})\n"
         "speed: {} m/s +- {} m/s\n"
-        "track: {} deg +- {} deg\n"
+        "track: {} deg\n"
         "accuracy: {} m",
         m_timestamp,
         m_latitude, m_epy, m_ydop,
         m_longitude, m_epx, m_xdop,
         m_altitude.value_or(NAN), m_epv, m_vdop,
         m_speed, m_eps,
-        m_track, m_epd,
+        m_track, /* m_epd, */
         m_accuracy.value_or(NAN));
 }
 
