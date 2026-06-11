@@ -120,8 +120,9 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
     Measurement measurementLat{
         .timestamp = point.timestamp(),
         .position = point.latitude(),
+        .positionError = (point.ydop() * point.ydop()) * (1.0 + point.epy() * point.epy()),
         .speed = speedLat,
-        .errorMultiplier = (point.ydop() * point.ydop()) * (1.0 + point.epy() * point.epy()) + (1.0 + point.eps() * point.eps()),
+        .speedError = (point.eps() * point.eps()),
     };
     if (!m_filters.lat) {
         m_filters.lat = std::make_unique<KalmanFilter>(measurementLat);
@@ -133,8 +134,9 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
     Measurement measurementLon{
         .timestamp = point.timestamp(),
         .position = point.longitude(),
+        .positionError = (point.xdop() * point.xdop()) * (1.0 + point.epx() * point.epx()),
         .speed = speedLon,
-        .errorMultiplier = (point.xdop() * point.xdop()) * (1.0 + point.epx() * point.epx()) + (1.0 + point.eps() * point.eps()),
+        .speedError = (point.eps() * point.eps()),
     };
     if (!m_filters.lon) {
         m_filters.lon = std::make_unique<KalmanFilter>(measurementLon);
@@ -147,8 +149,9 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
         Measurement measurementAlt{
             .timestamp = point.timestamp(),
             .position = *point.altitude(),
+            .positionError = (point.vdop() * point.vdop()) * (1.0 + point.epv() * point.epv()),
             .speed = 0.0, // TODO: climb
-            .errorMultiplier = (point.vdop() * point.vdop()) * (1.0 + point.epv() * point.epv()),
+            .speedError = 0.0, // TODO: climb
         };
         if (!m_filters.alt) {
             m_filters.alt = std::make_unique<KalmanFilter>(measurementAlt);

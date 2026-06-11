@@ -105,7 +105,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
         return std::nullopt;
     }
     point.m_speed = data.fix.speed;
-    if (!std::isfinite(data.fix.eps)) {
+    if (!std::isfinite(data.fix.eps) && data.fix.eps >= 0.0) {
         Logger::debug("Point rejected: fix.eps is required");
         return std::nullopt;
     }
