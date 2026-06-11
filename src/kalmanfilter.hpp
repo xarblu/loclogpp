@@ -50,8 +50,8 @@ public:
      */
     explicit KalmanFilter(double seedPos,
                           std::chrono::system_clock::time_point seedTime,
-                          double processNoiseCovariancePos = 0.00001,
-                          double processNoiseCovarianceVel = 0.000001,
+                          double processNoiseCovariancePos = 0.0001,
+                          double processNoiseCovarianceVel = 0.00005,
                           double sensorNoiseCovariance = 0.0005)
         : m_state{.pos = seedPos, .vel = 0.0}
         , m_lastMeasurement{seedTime}
