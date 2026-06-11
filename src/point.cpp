@@ -2,6 +2,7 @@
 
 #include "logger.hpp"
 #include "argparser.hpp"
+#include "utils.hpp"
 
 #include <gps.h>
 #include <libgpsmm.h>
@@ -197,8 +198,6 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromSQL(sqlite3_stmt *statement)
 }
 
 double LocLogPP::Point::distance(const Point &other) const {
-    constexpr double EARTH_RADIUS_METERS{6371000.0};
-
     double latA = m_latitude * M_PI / 180.0;
     double latB = other.latitude() * M_PI / 180.0;
 
@@ -210,7 +209,7 @@ double LocLogPP::Point::distance(const Point &other) const {
 
     double haversine = haversineLat + std::cos(latA) * std::cos(latB) * haversineLon;
     
-    double distance = 2.0 * EARTH_RADIUS_METERS * std::atan2(std::sqrt(haversine), std::sqrt(1.0 - haversine));
+    double distance = 2.0 * EARTH_RADIUS_AVG_METERS * std::atan2(std::sqrt(haversine), std::sqrt(1.0 - haversine));
 
     return distance;
 }

@@ -5,6 +5,7 @@
 #include "logger.hpp"
 #include "point.hpp"
 #include "kalmanfilter.hpp"
+#include "utils.hpp"
 
 #include <gps.h>
 #include <libgpsmm.h>
