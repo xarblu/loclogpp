@@ -27,7 +27,7 @@ message(STATUS "Using LIBGPS:  ${LIBGPS_VERSION}")
 message(STATUS "---------------------------------")
 
 # default to a Release build with debug info
-if(NOT CMAKE_BUILD_TYPE)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Build Type")
 endif()
 
