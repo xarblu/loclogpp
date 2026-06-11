@@ -20,16 +20,21 @@ pkg_search_module(LIBCURL REQUIRED libcurl)
 # gpsd
 pkg_search_module(LIBGPS REQUIRED libgps)
 
-message(STATUS "---------------------------------")
-message(STATUS "Using SQLITE3: ${SQLITE3_VERSION}")
-message(STATUS "Using LIBCURL: ${LIBCURL_VERSION}")
-message(STATUS "Using LIBGPS:  ${LIBGPS_VERSION}")
-message(STATUS "---------------------------------")
-
 # default to a Release build with debug info
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Build Type")
 endif()
+
+message(STATUS "---------------------------------")
+message(STATUS "Summary:")
+message(STATUS "")
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+message(STATUS "")
+message(STATUS "Dependencies:")
+message(STATUS "Using SQLITE3: ${SQLITE3_VERSION}")
+message(STATUS "Using LIBCURL: ${LIBCURL_VERSION}")
+message(STATUS "Using LIBGPS:  ${LIBGPS_VERSION}")
+message(STATUS "---------------------------------")
 
 add_subdirectory(src)
 add_subdirectory(meta)
