@@ -208,9 +208,9 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::pastPointsCenter() const {
 
     // XXX: does it make sense to use last points timestamp?
     return Point{m_pastPoints.back().timestamp(),
-                 static_cast<float>(latMean),
-                 static_cast<float>(lonMean),
-                 static_cast<float>(speedMean),
+                 latMean,
+                 lonMean,
+                 speedMean,
                  accMean,
                  altMean};
 }
@@ -257,7 +257,7 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     const double oldLatMean{oldLat / oldCount};
     const double oldLonMean{oldLon / oldCount};
 
-    const Point oldCenter{std::chrono::system_clock::now(), static_cast<float>(oldLatMean), static_cast<float>(oldLonMean), 0.0};
+    const Point oldCenter{std::chrono::system_clock::now(), oldLatMean, oldLonMean, 0.0};
 
     // newer cluster
     double newLat{0.0};
@@ -273,7 +273,7 @@ void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
     const double newLatMean{newLat / newCount};
     const double newLonMean{newLon / newCount};
 
-    const Point newCenter{std::chrono::system_clock::now(), static_cast<float>(newLatMean), static_cast<float>(newLonMean), 0.0};
+    const Point newCenter{std::chrono::system_clock::now(), newLatMean, newLonMean, 0.0};
 
     const double distance = oldCenter.distance(newCenter);
 

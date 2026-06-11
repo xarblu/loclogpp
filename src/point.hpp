@@ -14,11 +14,11 @@ class ArgParser;
 class Point {
     // exported values
     std::chrono::system_clock::time_point m_timestamp{};
-    float m_latitude;
-    float m_longitude;
-    float m_speed;
-    std::optional<float> m_accuracy{std::nullopt};
-    std::optional<float> m_altitude{std::nullopt};
+    double m_latitude;
+    double m_longitude;
+    double m_speed;
+    std::optional<double> m_accuracy{std::nullopt};
+    std::optional<double> m_altitude{std::nullopt};
 
     // track and its uncertainty in degrees relative to true north
     double m_track{0.0};
@@ -42,7 +42,7 @@ public:
     /**
      * Public constructor only with all valid params
      */
-    explicit Point(std::chrono::system_clock::time_point timestamp, float latitude, float longitude, float speed, std::optional<float> accuracy = std::nullopt, std::optional<float> altitude = std::nullopt)
+    explicit Point(std::chrono::system_clock::time_point timestamp, double latitude, double longitude, double speed, std::optional<double> accuracy = std::nullopt, std::optional<double> altitude = std::nullopt)
         : m_timestamp{timestamp}
         , m_latitude{latitude}
         , m_longitude{longitude}
@@ -75,11 +75,11 @@ public:
      * Getters
      */
     std::chrono::system_clock::time_point timestamp() const { return m_timestamp; }
-    float latitude() const { return m_latitude; }
-    float longitude() const { return m_longitude; }
-    float speed() const { return m_speed; }
-    std::optional<float> accuracy() const { return m_accuracy; }
-    std::optional<float> altitude() const { return m_altitude; }
+    double latitude() const { return m_latitude; }
+    double longitude() const { return m_longitude; }
+    double speed() const { return m_speed; }
+    std::optional<double> accuracy() const { return m_accuracy; }
+    std::optional<double> altitude() const { return m_altitude; }
     double xdop() const { return m_xdop; }
     double ydop() const { return m_ydop; }
     double epx() const { return m_epx; }
@@ -95,9 +95,9 @@ public:
     /**
      * Setters
      */
-    void setLatitude(float value) { m_latitude = value; }
-    void setLongitude(float value) { m_longitude = value; }
-    void setAltitude(float value) { m_altitude = value; }
+    void setLatitude(double value) { m_latitude = value; }
+    void setLongitude(double value) { m_longitude = value; }
+    void setAltitude(double value) { m_altitude = value; }
 
     /**
      * Get the distance between this and another point
