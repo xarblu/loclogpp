@@ -141,7 +141,7 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
     if (!m_filters.lon) {
         m_filters.lon = std::make_unique<KalmanFilter>(measurementLon);
     } else {
-        point.setLongitude(m_filters.lat->update(measurementLon));
+        point.setLongitude(m_filters.lon->update(measurementLon));
     }
 
     // altitude (optional)
