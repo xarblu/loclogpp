@@ -149,6 +149,18 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
         }
     }
 
+    // TRACK + EPD
+    if (!(std::isfinite(data.fix.track))) {
+        Logger::debug("Point rejected: fix.track is required");
+        return std::nullopt;
+    }
+    point.m_track = data.fix.track;
+    if (!(std::isfinite(data.fix.epd))) {
+        Logger::debug("Point rejected: fix.epd is required");
+        return std::nullopt;
+    }
+    point.m_track = data.fix.epd;
+
     return point;
 }
 
@@ -215,23 +227,19 @@ void LocLogPP::Point::update(const Point &other) {
 std::string LocLogPP::Point::toString() const {
     return std::format(
         "timestamp: {:%FT%TZ}\n"
-        "latitude: {} +- {} m\n"
-        "longitude: {} +- {} m\n"
-        "altitude: {} +- {} m\n"
-        "speed: {} +- {} m/s\n"
-        "accuracy: {} m\n"
-        "xdop: {}\n"
-        "ydop: {}\n"
-        "vdop: {}",
+        "latitude: {} deg +- {} m (ydop: {})\n"
+        "longitude: {} deg +- {} m (xdop: {})\n"
+        "altitude: {} m +- {} m (vdop: {})\n"
+        "speed: {} m/s +- {} m/s\n"
+        "track: {} deg +- {} deg\n"
+        "accuracy: {} m",
         m_timestamp,
-        m_latitude, m_epy,
-        m_longitude, m_epx,
-        m_altitude.value_or(NAN), m_epv,
+        m_latitude, m_epy, m_ydop,
+        m_longitude, m_epx, m_xdop,
+        m_altitude.value_or(NAN), m_epv, m_vdop,
         m_speed, m_eps,
-        m_accuracy.value_or(NAN),
-        m_xdop,
-        m_ydop,
-        m_vdop);
+        m_track, m_epd,
+        m_accuracy.value_or(NAN));
 }
 
 std::string LocLogPP::Point::toSQL() const {

@@ -20,6 +20,10 @@ class Point {
     std::optional<float> m_accuracy{std::nullopt};
     std::optional<float> m_altitude{std::nullopt};
 
+    // track and its uncertainty in degrees relative to true north
+    double m_track{0.0};
+    double m_epd{0.0};
+
     // only used internally
     double m_xdop{0.0};
     double m_ydop{0.0};
@@ -83,6 +87,10 @@ public:
     double eps() const { return m_eps; }
     double epv() const { return m_epv; }
     double vdop() const { return m_vdop; }
+
+    // track and its uncertainty in degrees relative to true north
+    double track() const { return m_track; }
+    double epd() const { return m_epd; }
 
     /**
      * Setters
