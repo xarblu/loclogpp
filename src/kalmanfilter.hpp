@@ -3,6 +3,24 @@
 #include <chrono>
 
 namespace LocLogPP {
+
+/**
+ * Measurement for the KalmanFilter
+ */
+struct Measurement {
+    // timestamp of the measurement
+    std::chrono::system_clock::time_point timestamp{};
+
+    // position of the value (lat/lon/alt)
+    double position{};
+
+    // "change rate" of the value (speed/climb)
+    double speed{};
+
+    // error multiplier
+    double errorMultiplier{1.0};
+};
+
 /**
  * Basic 2D Kalman filter for Geolocator
  * to be used on individual Point location components
@@ -48,13 +66,12 @@ public:
      * higher -> filter larger spikes
      * note that this gets multiplied with a dynamic error each update()
      */
-    explicit KalmanFilter(double seedPos,
-                          std::chrono::system_clock::time_point seedTime,
+    explicit KalmanFilter(Measurement &seed,
                           double processNoiseCovariancePos = 0.0001,
                           double processNoiseCovarianceVel = 0.00005,
                           double sensorNoiseCovariance = 0.0005)
-        : m_state{.pos = seedPos, .vel = 0.0}
-        , m_lastMeasurement{seedTime}
+        : m_state{.pos = seed.position, .vel = seed.speed}
+        , m_lastMeasurement{seed.timestamp}
         , m_processNoiseCovariance{.pos = processNoiseCovariancePos, .vel = processNoiseCovarianceVel}
         , m_sensorNoiseCovariance{sensorNoiseCovariance}
     {}
@@ -79,7 +96,7 @@ public:
      *   - EPV
      * (larger -> lower trust)
      */
-    double update(std::chrono::system_clock::time_point timestamp, double measurement, double errorMultiplier = 1.0);
+    double update(Measurement &measurement);
 };
 
 } // namespace LocLogPP

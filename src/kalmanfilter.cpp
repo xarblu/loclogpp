@@ -2,7 +2,12 @@
 
 #include <chrono>
 
-double LocLogPP::KalmanFilter::update(std::chrono::system_clock::time_point timestamp, double measurement, double errorMultiplier) {
+double LocLogPP::KalmanFilter::update(LocLogPP::Measurement &measurement) {
+    const auto &timestamp = measurement.timestamp;
+    const auto &position = measurement.position;
+    const auto &speed = measurement.speed;
+    const auto &errorMultiplier = measurement.errorMultiplier;
+
     // temporaries for "atomic" struct swaps
     ErrorCovariance tempErrorCovariance;
     State tempState;
@@ -43,8 +48,8 @@ double LocLogPP::KalmanFilter::update(std::chrono::system_clock::time_point time
     
     // correct state
     tempState = {
-        .pos = m_state.pos + kalmanGain.pos * (measurement - m_state.pos),
-        .vel = m_state.vel + kalmanGain.vel * (measurement - m_state.pos),
+        .pos = m_state.pos + kalmanGain.pos * (position - m_state.pos),
+        .vel = m_state.vel + kalmanGain.vel * (position - m_state.pos),
     };
     m_state = tempState;
 

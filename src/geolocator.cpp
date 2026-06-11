@@ -114,27 +114,46 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
 }
 
 void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
+    const auto [speedLat, speedLon] = speedToLatLonDegPerSecond(point.latitude(), point.longitude(), point.speed(), point.track());
+
+    // latitude
+    Measurement measurementLat{
+        .timestamp = point.timestamp(),
+        .position = point.latitude(),
+        .speed = speedLat,
+        .errorMultiplier = (point.ydop() * point.ydop()) * (1.0 + point.epy() * point.epy()) + (1.0 + point.eps() * point.eps()),
+    };
     if (!m_filters.lat) {
-        m_filters.lat = std::make_unique<KalmanFilter>(point.latitude(), point.timestamp());
+        m_filters.lat = std::make_unique<KalmanFilter>(measurementLat);
     } else {
-        const double errorMultiplier{(point.ydop() * point.ydop()) * (1.0 + point.epy() * point.epy()) + (1.0 + point.eps() * point.eps())};
-        point.setLatitude(m_filters.lat->update(point.timestamp(), point.latitude(), errorMultiplier));
+        point.setLatitude(m_filters.lat->update(measurementLat));
     }
 
+    // longitude
+    Measurement measurementLon{
+        .timestamp = point.timestamp(),
+        .position = point.longitude(),
+        .speed = speedLon,
+        .errorMultiplier = (point.xdop() * point.xdop()) * (1.0 + point.epx() * point.epx()) + (1.0 + point.eps() * point.eps()),
+    };
     if (!m_filters.lon) {
-        m_filters.lon = std::make_unique<KalmanFilter>(point.longitude(), point.timestamp());
+        m_filters.lon = std::make_unique<KalmanFilter>(measurementLon);
     } else {
-        const double errorMultiplier{(point.xdop() * point.xdop()) * (1.0 + point.epx() * point.epx()) + (1.0 + point.eps() * point.eps())};
-        point.setLongitude(m_filters.lon->update(point.timestamp(), point.longitude(), errorMultiplier));
+        point.setLatitude(m_filters.lat->update(measurementLon));
     }
 
-    // altitude is optional
+    // altitude (optional)
     if (point.altitude() && point.vdop()) {
+        Measurement measurementAlt{
+            .timestamp = point.timestamp(),
+            .position = *point.altitude(),
+            .speed = 0.0, // TODO: climb
+            .errorMultiplier = (point.vdop() * point.vdop()) * (1.0 + point.epv() * point.epv()),
+        };
         if (!m_filters.alt) {
-            m_filters.alt = std::make_unique<KalmanFilter>(*point.altitude(), point.timestamp());
+            m_filters.alt = std::make_unique<KalmanFilter>(measurementAlt);
         } else {
-            const double errorMultiplier{(point.vdop() * point.vdop()) * (1.0 + point.epv() * point.epv())};
-            point.setAltitude(m_filters.alt->update(point.timestamp(), *point.altitude(), errorMultiplier));
+            point.setAltitude(m_filters.alt->update(measurementAlt));
         }
     }
 }
