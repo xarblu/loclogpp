@@ -26,5 +26,10 @@ message(STATUS "Using LIBCURL: ${LIBCURL_VERSION}")
 message(STATUS "Using LIBGPS:  ${LIBGPS_VERSION}")
 message(STATUS "---------------------------------")
 
+# default to a Release build with debug info
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Build Type")
+endif()
+
 add_subdirectory(src)
 add_subdirectory(meta)
