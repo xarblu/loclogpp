@@ -32,6 +32,7 @@ class Point {
     double m_eps{0.0};
 
     // tied to altitude
+    double m_climb{0.0};
     double m_epv{0.0};
     double m_vdop{0.0};
 
@@ -85,6 +86,7 @@ public:
     double epx() const { return m_epx; }
     double epy() const { return m_epy; }
     double eps() const { return m_eps; }
+    double climb() const { return m_climb; }
     double epv() const { return m_epv; }
     double vdop() const { return m_vdop; }
 

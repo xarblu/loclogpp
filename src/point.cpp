@@ -122,6 +122,12 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
         Logger::debug("Point rejected: Altitude below minimum (has {:.3f}, min {:.3f})", *point.m_altitude, args->minAltitudeMeters());
         return std::nullopt;
     }
+    if (point.m_altitude && !std::isfinite(data.fix.climb)) {
+        Logger::debug("Point altitude discarded: fix.climb is required");
+        point.m_altitude.reset();
+    } else {
+        point.m_climb = data.fix.climb;
+    }
     if (point.m_altitude && !std::isfinite(data.dop.vdop)) {
         Logger::debug("Point altitude discarded: dop.vdop is required");
         point.m_altitude.reset();
@@ -228,6 +234,7 @@ std::string LocLogPP::Point::toString() const {
         "longitude: {} deg +- {} m (xdop: {})\n"
         "altitude: {} m +- {} m (vdop: {})\n"
         "speed: {} m/s +- {} m/s\n"
+        "climb: {} m/s\n"
         "track: {} deg +- {} deg\n"
         "accuracy: {} m",
         m_timestamp,
@@ -235,6 +242,7 @@ std::string LocLogPP::Point::toString() const {
         m_longitude, m_epx, m_xdop,
         m_altitude.value_or(NAN), m_epv, m_vdop,
         m_speed, m_eps,
+        m_climb,
         m_track, m_epd.value_or(NAN),
         m_accuracy.value_or(NAN));
 }
