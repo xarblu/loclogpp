@@ -215,81 +215,43 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::pastPointsCenter() const {
                  altMean};
 }
 
-void LocLogPP::Geolocator::evaluateState(LocLogPP::Point &point) {
-    // We detect movement by calculating the center of the
-    // older 75% and the newer 25% of recent points.
-    // If these clusters are more than stationaryDistance
-    // apart we enter MOVING state, else STATIONARY
+void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
+    auto &anchorPoint = m_stationaryDetection.anchorPoint;
+    auto &stopCount = m_stationaryDetection.stopCount;
+    auto &state = m_stationaryDetection.state;
+    const auto &stopSpeedThreshold = m_stationaryDetection.stopSpeedThreshold;
+    const auto &stopsRequired = m_stationaryDetection.stopsRequired;
+    const auto &containmentRadius = m_stationaryDetection.containmentRadius;
 
-    // threshold of cluster distance before going MOVING
-    constexpr double stationaryDistance{15.0};
+    if (point.speed() < stopSpeedThreshold) {
+        // not STATIONARY yet
+        if (stopCount < stopsRequired) {
+            stopCount++;
+            return;
+        }
 
-    // amount of points to keep for evaluation
-    constexpr size_t evalPointsRequired{30};
-    constexpr size_t evalPointsMax{60};
+        // first time STATIONARY - lock to the last point
+        if (!anchorPoint) {
+            anchorPoint = point;
+            state = State::STATIONARY;
+            Logger::info("State changed: {}", stateToString(state));
+            return;
+        }
 
-    // [0, pivot-1] belongs to old
-    // [pivot, end] belongs to new
-    const auto pivot{std::lround(static_cast<double>(m_pastPoints.size()) * 0.75)};
-
-    // manage points
-    m_pastPoints.push_back(point);
-    if (m_pastPoints.size() < evalPointsRequired) {
-        Logger::debug("Not enough points for mode evaluation (have {} need {})", m_pastPoints.size(), evalPointsRequired);
+        // staying STATIONARY
         return;
     }
 
-    while (m_pastPoints.size() > evalPointsMax) {
-        m_pastPoints.pop_front();
+    // just some noise - still considering this STATIONARY
+    if (anchorPoint && anchorPoint->distance(point) < containmentRadius) {
+            return;
     }
 
-    // older cluster
-    double oldLat{0.0};
-    double oldLon{0.0};
-    int oldCount{0};
-
-    for (auto it = m_pastPoints.begin(); it != m_pastPoints.begin() + pivot; it++) {
-        oldLat += it->latitude();
-        oldLon += it->longitude();
-        oldCount += 1;
-    }
-
-    const double oldLatMean{oldLat / oldCount};
-    const double oldLonMean{oldLon / oldCount};
-
-    const Point oldCenter{std::chrono::system_clock::now(), oldLatMean, oldLonMean, 0.0};
-
-    // newer cluster
-    double newLat{0.0};
-    double newLon{0.0};
-    int newCount{0};
-
-    for (auto it = m_pastPoints.begin() + pivot; it != m_pastPoints.end(); it++) {
-        newLat += it->latitude();
-        newLon += it->longitude();
-        newCount += 1;
-    }
-
-    const double newLatMean{newLat / newCount};
-    const double newLonMean{newLon / newCount};
-
-    const Point newCenter{std::chrono::system_clock::now(), newLatMean, newLonMean, 0.0};
-
-    const double distance = oldCenter.distance(newCenter);
-
-    Logger::debug("Center of old cluster:\n{}", oldCenter.toString());
-    Logger::debug("Center of new cluster:\n{}", newCenter.toString());
-    Logger::debug("Distance: {:.3f} m", distance);
-
-    // set state
-    State state = (distance < stationaryDistance)
-        ? State::STATIONARY 
-        : State::MOVING;
-
-    if (m_state != state) {
-        Logger::info("State changed: {}", stateToString(state));
-        m_state = state;
-    }
+    // actually not STATIONARY anymore
+    anchorPoint.reset();
+    stopCount = 0;
+    state = State::MOVING;
+    Logger::info("State changed: {}", stateToString(state));
 }
 
 int LocLogPP::Geolocator::trackInternal() {
@@ -357,12 +319,12 @@ int LocLogPP::Geolocator::trackInternal() {
 
         Logger::debug("Point after filters:\n{}", point->toString());
 
-        evaluateState(*point);
+        updateStationaryDetection(*point);
 
         // seconds since last returned point
         auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - m_lastPointTime).count();
 
-        if (m_state == State::STATIONARY) {
+        if (m_stationaryDetection.state == State::STATIONARY) {
             // this is our heartbeat interval while stationary
             if (elapsedSeconds < m_args->stationaryHeartbeatSeconds()) {
                 continue;

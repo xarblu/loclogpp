@@ -47,11 +47,6 @@ private:
     std::deque<Point> m_pastPoints{};
 
     /**
-     * Current detected state
-     */
-    State m_state{State::STATIONARY};
-
-    /**
      * Kalman filters for lat, lon, alt
      *
      * lazily initialized and seeded by the received point
@@ -61,6 +56,35 @@ private:
         std::unique_ptr<KalmanFilter> lon{nullptr};
         std::unique_ptr<KalmanFilter> alt{nullptr};
     } m_filters;
+
+    /**
+     * Things for stationary detection
+     */
+    struct {
+        // anchored point
+        std::optional<Point> anchorPoint{std::nullopt};
+
+        // times we stopped according to speed threshold
+        int stopCount{0};
+
+        // the current state, initially MOVING so we
+        // can pick up an anchorPoint before going STATIONARY
+        State state{State::MOVING};
+
+        // --- configuration parameters
+
+        // points with speed lower than this are considered stopped
+        double stopSpeedThreshold{0.2};
+
+        // we need this amount of consecutive stopped points
+        // to enter STATIONARY state
+        int stopsRequired{5};
+
+        // radius around anchorPoint that should
+        // still be considered stationary,
+        // even if stopSpeedThreshold is exceeded
+        double containmentRadius{10.0};
+    } m_stationaryDetection;
 
     /**
      * Only allow creation with create()
@@ -100,9 +124,9 @@ private:
     std::optional<Point> pastPointsCenter() const;
 
     /**
-     * Store copy of the point and evaluate state
+     * Update the stationary detection
      */
-    void evaluateState(Point &point);
+    void updateStationaryDetection(const Point &point);
 
     /**
      * Internal tracker loop
