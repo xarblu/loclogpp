@@ -1,5 +1,7 @@
 #pragma once
 
+#include "utils.hpp"
+
 #include <chrono>
 
 namespace LocLogPP {
@@ -12,11 +14,19 @@ struct Measurement {
     std::chrono::system_clock::time_point timestamp{};
 
     // position of the value (lat/lon/alt)
+    // lat/lon: deg
+    // alt: m
     double position{};
+    // lat/lon: deg^2
+    // alt: m^2
     double positionError{};
 
     // "change rate" of the value (speed/climb)
+    // lat/lon: deg/s
+    // alt: m/s
     double speed{};
+    // lat/lon: (deg/s)^2
+    // alt: (m/s)^2
     double speedError{};
 };
 
@@ -54,21 +64,24 @@ public:
      * seed - initial state taken as-is
      *
      * processNoisePos (~ position jitter)
-     * adjust this up to allow sharper turns or down for smoother/straighter lines
-     * should be increased when cutting too many curves/corners
+     * The default is intended for lat/lon measurements in deg.
+     * Adjust this up to allow sharper turns or down for smoother/straighter lines
+     * Should be increased when cutting too many curves/corners
      *
      * processNoiseVel (~ inertia of the movement)
-     * adjust this up to adjust speed of state faster or down to adjust slower
-     * should be increased when overshooting curves/corners
+     * The default is intended for lat/lon measurements in deg.
+     * Adjust this up to adjust speed of state faster or down to adjust slower
+     * Should be increased when overshooting curves/corners
      *
-     * sensorNoise (~ base sensor error under "perfect" conditions)
-     * higher -> filter larger spikes
-     * note that this gets multiplied with a dynamic error each update()
+     * sensorNoise (~ scalar for the Measurement provided *Error values)
+     * Baseline of 1.0 means fully trusting the Measurement error as is
+     * Lower values mean "lean towards measurement"
+     * Higher values mean "lean towards prediction"
      */
     explicit KalmanFilter(Measurement &seed,
-                          double processNoisePos = 0.0001,
-                          double processNoiseVel = 0.00005,
-                          double sensorNoise = 0.0005)
+                          double processNoisePos = metToDegSquared(0.1),
+                          double processNoiseVel = metToDegSquared(3.0),
+                          double sensorNoise = 1.0)
         : m_state{.pos = seed.position, .vel = seed.speed}
         , m_lastMeasurement{seed.timestamp}
         , m_processNoise{.pos = processNoisePos, .vel = processNoiseVel}

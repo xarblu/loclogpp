@@ -15,7 +15,6 @@
 #include <optional>
 #include <functional>
 #include <chrono>
-#include <cmath>
 #include <thread>
 
 static inline std::string stateToString(LocLogPP::Geolocator::State state) {
@@ -124,18 +123,20 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
 
     // only while MOVING use the actual values
     if (m_stationaryDetection.state == State::MOVING) {
+        // degrees
         std::tie(speedLat, speedLon) = speedToLatLonDegPerSecond(point.latitude(), point.longitude(), point.speed(), point.track());
-        speedErrorLatLon = point.eps() * point.eps();
+        speedErrorLatLon = metToDegSquared(point.eps() * point.eps());
 
+        // plain meters
         speedAlt = point.climb();
-        speedErrorAlt = point.eps() * point.epc();
+        speedErrorAlt = point.epc() * point.epc();
     }
 
     // latitude
     Measurement measurementLat{
         .timestamp = point.timestamp(),
         .position = point.latitude(),
-        .positionError = (point.ydop() * point.ydop()) * (1.0 + point.epy() * point.epy()),
+        .positionError = metToDegSquared((point.ydop() * point.ydop()) * (1.0 + point.epy() * point.epy())),
         .speed = speedLat,
         .speedError = speedErrorLatLon,
     };
@@ -149,7 +150,7 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
     Measurement measurementLon{
         .timestamp = point.timestamp(),
         .position = point.longitude(),
-        .positionError = (point.xdop() * point.xdop()) * (1.0 + point.epx() * point.epx()),
+        .positionError = metToDegSquared((point.xdop() * point.xdop()) * (1.0 + point.epx() * point.epx())),
         .speed = speedLon,
         .speedError = speedErrorLatLon,
     };
@@ -171,7 +172,8 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
             .speedError = speedErrorAlt,
         };
         if (!m_filters.alt) {
-            m_filters.alt = std::make_unique<KalmanFilter>(measurementAlt);
+            // KalmanFilter defaults assume degrees, altitude values are plain meters
+            m_filters.alt = std::make_unique<KalmanFilter>(measurementAlt, 0.1, 3);
         } else {
             point.setAltitude(m_filters.alt->update(measurementAlt));
         }

@@ -29,6 +29,22 @@ constexpr double EARTH_ECCENTRICITY_SQUARED{6.69437999014e-3};
 constexpr double DEG_TO_RAD{M_PI / 180.0};
 constexpr double RAD_TO_DEG{180.0 / M_PI};
 
+/**
+ * Rough multiplier for mapping between lat/lon degrees and meters
+ * (111.132 km per degree)
+ * This should only be used for estimates, not exact calculations
+ */
+constexpr double METER_PER_DEG{111132.0};
+constexpr double metToDeg(double meters) {
+    return meters / METER_PER_DEG;
+}
+constexpr double metToDegSquared(double meters) {
+    const double degrees = metToDeg(meters);
+    return degrees * degrees;
+}
+constexpr double degToMet(double degrees) {
+    return degrees * METER_PER_DEG;
+}
 
 /**
  * Calculate the speed in lat/lon directions in deg/sec based on
