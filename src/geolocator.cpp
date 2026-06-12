@@ -114,7 +114,16 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::filterPoint(Point point) co
 }
 
 void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
-    const auto [speedLat, speedLon] = speedToLatLonDegPerSecond(point.latitude(), point.longitude(), point.speed(), point.track());
+    // fixed values while STATIONARY, with minimal error
+    double speedLat{0.0};
+    double speedLon{0.0};
+    double speedErrorLatLon{1e-5};
+
+    // only while MOVING use the actual values
+    if (m_stationaryDetection.state == State::MOVING) {
+        std::tie(speedLat, speedLon) = speedToLatLonDegPerSecond(point.latitude(), point.longitude(), point.speed(), point.track());
+        speedErrorLatLon = point.eps() * point.eps();
+    }
 
     // latitude
     Measurement measurementLat{
@@ -122,7 +131,7 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
         .position = point.latitude(),
         .positionError = (point.ydop() * point.ydop()) * (1.0 + point.epy() * point.epy()),
         .speed = speedLat,
-        .speedError = (point.eps() * point.eps()),
+        .speedError = speedErrorLatLon,
     };
     if (!m_filters.lat) {
         m_filters.lat = std::make_unique<KalmanFilter>(measurementLat);
@@ -136,7 +145,7 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
         .position = point.longitude(),
         .positionError = (point.xdop() * point.xdop()) * (1.0 + point.epx() * point.epx()),
         .speed = speedLon,
-        .speedError = (point.eps() * point.eps()),
+        .speedError = speedErrorLatLon,
     };
     if (!m_filters.lon) {
         m_filters.lon = std::make_unique<KalmanFilter>(measurementLon);
