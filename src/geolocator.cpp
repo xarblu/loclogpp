@@ -242,7 +242,8 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
     const auto &stopsRequired = m_stationaryDetection.stopsRequired;
     const auto &containmentRadius = m_stationaryDetection.containmentRadius;
 
-    if (point.speed() < stopSpeedThreshold) {
+    // MOVING but stopped according to speed
+    if (!anchorPoint && point.speed() < stopSpeedThreshold) {
         // not STATIONARY yet
         if (stopCount < stopsRequired) {
             stopCount++;
@@ -250,31 +251,50 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
         }
 
         // first time STATIONARY - lock to the last point
-        if (!anchorPoint) {
-            anchorPoint = point;
-            if (state != State::STATIONARY) {
-                state = State::STATIONARY;
-                Logger::info("State changed: {}", stateToString(state));
-            }
-            return;
-        }
-
-        // staying STATIONARY
+        anchorPoint = point;
+        state = State::STATIONARY;
+        Logger::info("State changed: {}", stateToString(state));
         return;
     }
 
-    // just some noise - still considering this STATIONARY
-    if (anchorPoint && anchorPoint->distance(point) < containmentRadius) {
-            return;
+    // MOVING and no signs of stopping
+    if (!anchorPoint) {
+        if (stopCount > 0) {
+            stopCount--;
+        }
+        return;
     }
 
-    // actually not STATIONARY anymore
-    anchorPoint.reset();
-    stopCount = 0;
-    if (state != State::MOVING) {
-        state = State::MOVING;
-        Logger::info("State changed: {}", stateToString(state));
+    // once locked anything within our containmentRadius is STATIONARY
+    if (anchorPoint->distance(point) < containmentRadius) {
+        // recover in case of a few bogus points
+        // outside the containmentRadius
+        if (stopCount < stopsRequired) {
+            stopCount++;
+        }
+
+        return;
     }
+
+    // stopped outside containmentRadius
+    // keep state frozen until we either
+    //  - go back into containmentRadius (STATIONARY)
+    //  - continue moving outside containmentRadius (MOVING)
+    if (point.speed() < stopSpeedThreshold) {
+        return;
+    }
+
+    // started moving outside containmentRadius
+    // but not MOVING yet
+    if (stopCount > 0) {
+        stopCount--;
+        return;
+    }
+
+    // actually MOVING now
+    anchorPoint.reset();
+    state = State::MOVING;
+    Logger::info("State changed: {}", stateToString(state));
 }
 
 int LocLogPP::Geolocator::trackInternal() {

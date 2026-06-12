@@ -62,6 +62,7 @@ private:
      */
     struct {
         // anchored point
+        // nullopt implies MOVING state
         std::optional<Point> anchorPoint{std::nullopt};
 
         // times we stopped according to speed threshold
