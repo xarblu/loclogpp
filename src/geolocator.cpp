@@ -250,8 +250,10 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
         // first time STATIONARY - lock to the last point
         if (!anchorPoint) {
             anchorPoint = point;
-            state = State::STATIONARY;
-            Logger::info("State changed: {}", stateToString(state));
+            if (state != State::STATIONARY) {
+                state = State::STATIONARY;
+                Logger::info("State changed: {}", stateToString(state));
+            }
             return;
         }
 
@@ -267,8 +269,10 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
     // actually not STATIONARY anymore
     anchorPoint.reset();
     stopCount = 0;
-    state = State::MOVING;
-    Logger::info("State changed: {}", stateToString(state));
+    if (state != State::MOVING) {
+        state = State::MOVING;
+        Logger::info("State changed: {}", stateToString(state));
+    }
 }
 
 int LocLogPP::Geolocator::trackInternal() {
