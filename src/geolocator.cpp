@@ -249,6 +249,7 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
         // not STATIONARY yet
         if (stopCount < stopsRequired) {
             stopCount++;
+            Logger::debug("Not STATIONARY yet (stopCount: {})", stopCount);
             return;
         }
 
@@ -264,6 +265,7 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
         if (stopCount > 0) {
             stopCount--;
         }
+        Logger::debug("MOVING and no signs of stopping (stopCount: {})", stopCount);
         return;
     }
 
@@ -275,6 +277,7 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
             stopCount++;
         }
 
+        Logger::debug("STATIONARY while inside containmentRadius (stopCount: {})", stopCount);
         return;
     }
 
@@ -283,6 +286,7 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
     //  - go back into containmentRadius (STATIONARY)
     //  - continue moving outside containmentRadius (MOVING)
     if (point.speed() < stopSpeedThreshold) {
+        Logger::debug("Stopped outside containmentRadius (stopCount: {})", stopCount);
         return;
     }
 
@@ -290,6 +294,7 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
     // but not MOVING yet
     if (stopCount > 0) {
         stopCount--;
+        Logger::debug("Moved outside containmentRadius (stopCount: {})", stopCount);
         return;
     }
 
