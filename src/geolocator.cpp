@@ -286,7 +286,13 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
 
     // hard cutoff from STATIONARY even if speed is low
     if (anchorDistance > cutoffRadius) {
-        stopCount = 0;
+        // guard against single bad points
+        if (stopCount > 0) {
+            stopCount--;
+            Logger::debug("Exceeded cutoffRadius while STATIONARY (stopCount: {})", stopCount);
+            return;
+        }
+
         anchorPoint.reset();
         state = State::MOVING;
         Logger::warn("State changed (hard cutoff): {}", stateToString(state));
