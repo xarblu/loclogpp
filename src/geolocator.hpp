@@ -88,6 +88,10 @@ private:
         // still be considered stationary,
         // even if stopSpeedThreshold is exceeded
         double containmentRadius{10.0};
+
+        // hard cutoff radius for leaving STATIONARY
+        // even if speed is below threshold
+        double cutoffRadius{100.0};
     } m_stationaryDetection;
 
     /**

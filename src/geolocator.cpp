@@ -241,6 +241,7 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
     const auto &stopSpeedThreshold = m_stationaryDetection.stopSpeedThreshold;
     const auto &stopsRequired = m_stationaryDetection.stopsRequired;
     const auto &containmentRadius = m_stationaryDetection.containmentRadius;
+    const auto &cutoffRadius = m_stationaryDetection.cutoffRadius;
 
     Logger::debug("Updating stationary detection (stopCount: {})", stopCount);
 
@@ -269,8 +270,10 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
         return;
     }
 
+    const double anchorDistance{anchorPoint->distance(point)};
+
     // once locked anything within our containmentRadius is STATIONARY
-    if (anchorPoint->distance(point) < containmentRadius) {
+    if (anchorDistance < containmentRadius) {
         // recover in case of a few bogus points
         // outside the containmentRadius
         if (stopCount < stopsRequired) {
@@ -278,6 +281,15 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
         }
 
         Logger::debug("STATIONARY while inside containmentRadius (stopCount: {})", stopCount);
+        return;
+    }
+
+    // hard cutoff from STATIONARY even if speed is low
+    if (anchorDistance > cutoffRadius) {
+        stopCount = 0;
+        anchorPoint.reset();
+        state = State::MOVING;
+        Logger::warn("State changed (hard cutoff): {}", stateToString(state));
         return;
     }
 
