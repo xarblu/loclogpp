@@ -18,7 +18,6 @@ class Point {
     double m_longitude;
     double m_speed;
     std::optional<double> m_accuracy{std::nullopt};
-    std::optional<double> m_altitude{std::nullopt};
 
     // track and its uncertainty in degrees relative to true north
     double m_track{0.0};
@@ -31,10 +30,15 @@ class Point {
     double m_epy{0.0};
     double m_eps{0.0};
 
-    // tied to altitude
-    double m_climb{0.0};
+    // altitude values
+    // if altitude has a value the other values
+    // are ensured to be valid as well
+    // otherwise they're garbage
+    std::optional<double> m_altitude{std::nullopt};
     double m_epv{0.0};
     double m_vdop{0.0};
+    double m_climb{0.0};
+    double m_epc{0.0};
 
     // only allow default construction via helpers
     Point() = default;
@@ -80,15 +84,18 @@ public:
     double longitude() const { return m_longitude; }
     double speed() const { return m_speed; }
     std::optional<double> accuracy() const { return m_accuracy; }
-    std::optional<double> altitude() const { return m_altitude; }
     double xdop() const { return m_xdop; }
     double ydop() const { return m_ydop; }
     double epx() const { return m_epx; }
     double epy() const { return m_epy; }
     double eps() const { return m_eps; }
-    double climb() const { return m_climb; }
+
+    // altitude and related values
+    std::optional<double> altitude() const { return m_altitude; }
     double epv() const { return m_epv; }
     double vdop() const { return m_vdop; }
+    double climb() const { return m_climb; }
+    double epc() const { return m_epc; }
 
     // track and its uncertainty in degrees relative to true north
     double track() const { return m_track; }

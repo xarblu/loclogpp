@@ -119,10 +119,16 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
     double speedLon{0.0};
     double speedErrorLatLon{1e-5};
 
+    double speedAlt{0.0};
+    double speedErrorAlt{1e-5};
+
     // only while MOVING use the actual values
     if (m_stationaryDetection.state == State::MOVING) {
         std::tie(speedLat, speedLon) = speedToLatLonDegPerSecond(point.latitude(), point.longitude(), point.speed(), point.track());
         speedErrorLatLon = point.eps() * point.eps();
+
+        speedAlt = point.climb();
+        speedErrorAlt = point.eps() * point.epc();
     }
 
     // latitude
@@ -154,13 +160,15 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
     }
 
     // altitude (optional)
-    if (point.altitude() && point.vdop()) {
+    // Point ensures if altitude exists all related metrics
+    // (vdop, epv, etc.) are valid as well
+    if (point.altitude()) {
         Measurement measurementAlt{
             .timestamp = point.timestamp(),
             .position = *point.altitude(),
             .positionError = (point.vdop() * point.vdop()) * (1.0 + point.epv() * point.epv()),
-            .speed = 0.0, // TODO: climb
-            .speedError = 0.0, // TODO: climb
+            .speed = speedAlt,
+            .speedError = speedErrorAlt,
         };
         if (!m_filters.alt) {
             m_filters.alt = std::make_unique<KalmanFilter>(measurementAlt);
