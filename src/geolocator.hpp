@@ -75,7 +75,10 @@ private:
         // --- configuration parameters
 
         // points with speed lower than this are considered stopped
-        double stopSpeedThreshold{0.2};
+        // according to https://en.wikipedia.org/wiki/Preferred_walking_speed
+        // the preferred human walking speed is 1.10-1.65 m/s
+        // so we'll pick something slightly slower as our stationary threshold
+        double stopSpeedThreshold{0.8};
 
         // we need this amount of consecutive stopped points
         // to enter STATIONARY state
