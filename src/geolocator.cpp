@@ -242,6 +242,8 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
     const auto &stopsRequired = m_stationaryDetection.stopsRequired;
     const auto &containmentRadius = m_stationaryDetection.containmentRadius;
 
+    Logger::debug("Updating stationary detection (stopCount: {})", stopCount);
+
     // MOVING but stopped according to speed
     if (!anchorPoint && point.speed() < stopSpeedThreshold) {
         // not STATIONARY yet
