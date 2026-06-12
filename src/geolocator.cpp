@@ -332,7 +332,15 @@ int LocLogPP::Geolocator::trackInternal() {
 
             Logger::info("Stationary heartbeat reached");
 
-            // heartbeat ignores "point frequency filters"
+            // heartbeat uses the anchored point if it is available
+            // (should always be the case when stationary but as a fallback
+            // just keep the real point and warn)
+            if (m_stationaryDetection.anchorPoint) [[likely]] {
+                point = m_stationaryDetection.anchorPoint;
+            } else {
+                Logger::warn("STATIONARY without anchor point");
+            }
+
         } else {
             // this is our regular interval while moving
             if (elapsedSeconds < m_args->pointIntervalSeconds()) {
