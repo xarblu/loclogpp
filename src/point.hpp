@@ -107,6 +107,7 @@ public:
     void setLatitude(double value) { m_latitude = value; }
     void setLongitude(double value) { m_longitude = value; }
     void setAltitude(double value) { m_altitude = value; }
+    void setSpeed(double value) { m_speed = value; }
 
     /**
      * Get the distance between this and another point

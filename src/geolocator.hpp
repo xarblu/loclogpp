@@ -58,6 +58,11 @@ private:
     } m_filters;
 
     /**
+     * Last smoothed Point for EMA filter
+     */
+    std::optional<Point> m_lastSmoothedPoint{std::nullopt};
+
+    /**
      * Things for stationary detection
      */
     struct {
@@ -122,6 +127,11 @@ private:
      * Apply the Kalman filters for lat, lon, alt on the given Point
      */
     void applyKalmanFilters(Point &point);
+
+    /**
+     * Apply Exponential Moving Average smoothing filter on the given Point
+     */
+    void applyEMAFilter(Point &point);
 
     /**
      * Get center of m_pastPoints, the Point timestamp
