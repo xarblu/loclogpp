@@ -372,6 +372,10 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
 int LocLogPP::Geolocator::trackInternal() {
     std::optional<Point> stagingPoint{std::nullopt};
 
+    // timestamp of last fix, reset every time a Point
+    // fails parsing with BAD_FIX
+    std::optional<std::chrono::system_clock::time_point> lastFix{};
+
     while (true) {
         // GPSD can send "the same point" multiple times (different NMEA sentences or something)
         // we'll merge those into a single point based on their timestamp
@@ -396,6 +400,11 @@ int LocLogPP::Geolocator::trackInternal() {
 
             const auto newPoint = Point::fromGPSD(*data, m_args.get());
             if (!newPoint) {
+                if (newPoint.error() == Point::ParseError::BAD_FIX && lastFix) {
+                    Logger::warn("Location fix lost");
+                    lastFix.reset();
+                }
+
                 continue;
             }
             Logger::debug("Received new point:\n{}", newPoint->toString());
@@ -423,6 +432,16 @@ int LocLogPP::Geolocator::trackInternal() {
         point = point.and_then(std::bind(&LocLogPP::Geolocator::preFilterPoint, this, std::placeholders::_1));
         if (!point) {
             Logger::debug("Ignoring point due to filters");
+            continue;
+        }
+
+        // XXX: set fix after preFilterPoint or before?
+        if (!lastFix) {
+            Logger::info("Location fix obtained");
+            lastFix = point->timestamp();
+        }
+        if (point->timestamp() < *lastFix + m_args->fixWarmup()) {
+            Logger::debug("Ignoring point while in warmup phase");
             continue;
         }
 

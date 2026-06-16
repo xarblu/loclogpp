@@ -37,6 +37,8 @@ void LocLogPP::ArgParser::printHelp() {
               << "  --max-vdop              Maximum Vertical Dilution of Precision (default: " << defaults.maxVDOP() << ")\n"
               << "                          Only discards altitude information, the point is still\n"
               << "                          recorded unless filtered otherwise\n"
+              << "  --fix-warmup            Warmup time after GPSD has a location fix in seconds (default: " << defaults.fixWarmup() << ")\n"
+              << "                          No points will be fed to the tracking logic until this is exceeded\n"
               << "\n"
               << "OPERATION_OPTs for export:\n";
 }
@@ -217,6 +219,48 @@ std::pair<int, std::shared_ptr<LocLogPP::ArgParser>> LocLogPP::ArgParser::parse(
                         }
                         try {
                             parser->m_maxSpeedMetersPerSecond = std::stoi(std::string{argv[++i]});
+                            continue;
+                        } catch(std::invalid_argument e) {
+                            Logger::error("Bad interger value for: {}", arg);
+                            return {1, nullptr};
+                        }
+                    }
+
+                    if (arg == "--max-hdop") {
+                        if (i + 1 >= argc) {
+                            Logger::error("Argument requires value: {}", arg);
+                            return {1, nullptr};
+                        }
+                        try {
+                            parser->m_maxHDOP = std::stod(std::string{argv[++i]});
+                            continue;
+                        } catch(std::invalid_argument e) {
+                            Logger::error("Bad float value for: {}", arg);
+                            return {1, nullptr};
+                        }
+                    }
+
+                    if (arg == "--max-vdop") {
+                        if (i + 1 >= argc) {
+                            Logger::error("Argument requires value: {}", arg);
+                            return {1, nullptr};
+                        }
+                        try {
+                            parser->m_maxVDOP = std::stod(std::string{argv[++i]});
+                            continue;
+                        } catch(std::invalid_argument e) {
+                            Logger::error("Bad float value for: {}", arg);
+                            return {1, nullptr};
+                        }
+                    }
+
+                    if (arg == "--fix-warmup") {
+                        if (i + 1 >= argc) {
+                            Logger::error("Argument requires value: {}", arg);
+                            return {1, nullptr};
+                        }
+                        try {
+                            parser->m_fixWarmup = std::chrono::seconds{std::stoi(std::string{argv[++i]})};
                             continue;
                         } catch(std::invalid_argument e) {
                             Logger::error("Bad interger value for: {}", arg);

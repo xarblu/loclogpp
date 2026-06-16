@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include <chrono>
 
 namespace LocLogPP {
 
@@ -38,6 +39,7 @@ class ArgParser {
     // https://www.marinepublic.com/blogs/training/649465-hdop-pdop-gdop-gps-accuracy-multipath-effects
     double m_maxHDOP{5.0};
     double m_maxVDOP{3.0};
+    std::chrono::seconds m_fixWarmup{5};
 
     /**
      * Print help message
@@ -73,6 +75,7 @@ public:
     int maxSpeedMetersPerSecond() const { return m_maxSpeedMetersPerSecond; }
     double maxHDOP() const { return m_maxHDOP; }
     double maxVDOP() const { return m_maxVDOP; }
+    std::chrono::seconds fixWarmup() { return m_fixWarmup; };
 };
 
 } //namespace LocLogPP
