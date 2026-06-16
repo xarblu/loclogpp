@@ -370,12 +370,13 @@ void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {
 }
 
 int LocLogPP::Geolocator::trackInternal() {
+    std::optional<Point> stagingPoint{std::nullopt};
+
     while (true) {
         // GPSD can send "the same point" multiple times (different NMEA sentences or something)
         // we'll merge those into a single point based on their timestamp
         // (that should be the same for all sentences)
 
-        std::optional<Point> stagingPoint{std::nullopt};
         std::optional<Point> nextPoint{std::nullopt};
 
         while (true) {
@@ -414,10 +415,7 @@ int LocLogPP::Geolocator::trackInternal() {
             stagingPoint->update(*newPoint);
         }
 
-        // after this:
-        // point -> stagingPoint
-        // stagingPoint -> nextPoint
-        // nextPoint -> nullopt
+        // consume stagingPoint and set nextPoint as staging
         std::optional<Point> point{std::nullopt};
         point.swap(stagingPoint);
         stagingPoint.swap(nextPoint);
