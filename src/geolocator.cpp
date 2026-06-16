@@ -393,7 +393,7 @@ int LocLogPP::Geolocator::trackInternal() {
                 return 1;
             }
 
-            std::optional<Point> newPoint = Point::fromGPSD(*data, m_args.get());
+            const auto newPoint = Point::fromGPSD(*data, m_args.get());
             if (!newPoint) {
                 continue;
             }
@@ -401,17 +401,17 @@ int LocLogPP::Geolocator::trackInternal() {
 
             // this should only happen once during startup
             if (!stagingPoint) [[unlikely]] {
-                stagingPoint.swap(newPoint);
+                stagingPoint = *newPoint;
                 continue;
             }
 
             if (newPoint->timestamp() != stagingPoint->timestamp()) {
-                nextPoint.swap(newPoint);
+                nextPoint = *newPoint;
                 break;
             }
 
             Logger::debug("Merging duplicate point");
-            stagingPoint->update(newPoint.value());
+            stagingPoint->update(*newPoint);
         }
 
         // after this:

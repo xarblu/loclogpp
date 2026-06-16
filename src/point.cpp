@@ -14,16 +14,17 @@
 #include <sstream>
 #include <cstdint>
 #include <chrono>
+#include <expected>
 
 static inline std::string unixSecondsToISO8601UTC(std::int64_t unixSeconds) {
     std::chrono::system_clock::time_point tp{std::chrono::seconds{unixSeconds}};
     return std::format("{:%FT%TZ}", tp);
 }
 
-std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgParser *args) {
+std::expected<LocLogPP::Point, LocLogPP::Point::ParseError> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgParser *args) {
     if (!(data.set & MODE_SET)) {
         Logger::debug("Point rejected: fix.mode is required");
-        return std::nullopt;
+        return std::unexpected{ParseError::BAD_FIX};
     }
 
     const char* fixModeStr;
@@ -47,14 +48,14 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
 
     if (data.fix.mode < MODE_2D) {
         Logger::debug("Point rejected: fix.mode must be at least MODE_2D (is {})", fixModeStr);
-        return std::nullopt;
+        return std::unexpected{ParseError::BAD_FIX};
     }
 
     // reject low satellite count
     constexpr int satellitesRequired{5};
     if (data.satellites_used < satellitesRequired) {
         Logger::debug("Point rejected: Low satellite count (has {}, min {})", data.satellites_used, satellitesRequired);
-        return std::nullopt;
+        return std::unexpected{ParseError::BAD_SATELLITES};
     }
 
     Point point{};
@@ -62,7 +63,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
     // TIMESTAMP
     if (!(data.set & TIME_SET)) {
         Logger::debug("Point rejected: fix.time is required");
-        return std::nullopt;
+        return std::unexpected{ParseError::BAD_TIMESTAMP};
     }
     point.m_timestamp += std::chrono::seconds{data.fix.time.tv_sec};
     point.m_timestamp += std::chrono::microseconds{data.fix.time.tv_nsec / 1000};
@@ -70,15 +71,15 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
     // {X,Y}DOP
     if (!(std::isfinite(data.dop.xdop) && std::isfinite(data.dop.ydop))) {
         Logger::debug("Point rejected: dop.xdop and dop.ydop are required");
-        return std::nullopt;
+        return std::unexpected{ParseError::BAD_2D};
     }
     if (data.dop.xdop > args->maxHDOP()) {
         Logger::debug("Point rejected: Bad XDOP (has {:.3f}, max {:.3f})", data.dop.xdop, args->maxHDOP());
-        return std::nullopt;
+        return std::unexpected{ParseError::BAD_2D};
     }
     if (data.dop.ydop > args->maxHDOP()) {
         Logger::debug("Point rejected: Bad YDOP (has {:.3f}, max {:.3f})", data.dop.ydop, args->maxHDOP());
-        return std::nullopt;
+        return std::unexpected{ParseError::BAD_2D};
     }
     point.m_xdop = data.dop.xdop;
     point.m_ydop = data.dop.ydop;
@@ -86,7 +87,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
     // LAT + LON
     if (!(data.set & LATLON_SET) && std::isfinite(data.fix.latitude) && std::isfinite(data.fix.longitude)) {
         Logger::debug("Point rejected: fix.latitude and fix.longitude are required");
-        return std::nullopt;
+        return std::unexpected{ParseError::BAD_2D};
     }
     point.m_latitude = data.fix.latitude;
     point.m_longitude = data.fix.longitude;
@@ -94,7 +95,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
     // EP{X,Y}
     if (!(std::isfinite(data.fix.epx) && std::isfinite(data.fix.epy) && data.fix.epx >= 0.0 && data.fix.epy >= 0.0)) {
         Logger::debug("Point rejected: fix.epx and fix.epy are required");
-        return std::nullopt;
+        return std::unexpected{ParseError::BAD_2D};
     }
     point.m_epx = data.fix.epx;
     point.m_epy = data.fix.epy;
@@ -102,12 +103,12 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
     // SPEED + EPS
     if (!std::isfinite(data.fix.speed)) {
         Logger::debug("Point rejected: fix.speed is required");
-        return std::nullopt;
+        return std::unexpected{ParseError::BAD_SPEED};
     }
     point.m_speed = data.fix.speed;
     if (!std::isfinite(data.fix.eps) && data.fix.eps >= 0.0) {
         Logger::debug("Point rejected: fix.eps is required");
-        return std::nullopt;
+        return std::unexpected{ParseError::BAD_SPEED};
     }
     point.m_eps = data.fix.eps;
 
@@ -120,7 +121,7 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
     }
     if (point.m_altitude && *point.m_altitude < args->minAltitudeMeters()) {
         Logger::debug("Point rejected: Altitude below minimum (has {:.3f}, min {:.3f})", *point.m_altitude, args->minAltitudeMeters());
-        return std::nullopt;
+        return std::unexpected{ParseError::BAD_ALTITUDE};
     }
     if (point.m_altitude && !std::isfinite(data.dop.vdop)) {
         Logger::debug("Point altitude discarded: dop.vdop is required");
@@ -158,14 +159,14 @@ std::optional<LocLogPP::Point> LocLogPP::Point::fromGPSD(gps_data_t &data, ArgPa
 
         if (*point.m_accuracy > args->requiredAccuracyMeters()) {
             Logger::debug("Point rejected: Accuracy insufficient (has {:.3f}, min {:.3f})", *point.m_accuracy, args->requiredAccuracyMeters());
-            return std::nullopt;
+            return std::unexpected{ParseError::BAD_ACCURACY};
         }
     }
 
     // TRACK + EPD
     if (!(std::isfinite(data.fix.track))) {
         Logger::debug("Point rejected: fix.track is required");
-        return std::nullopt;
+        return std::unexpected{ParseError::BAD_TRACK};
     }
     point.m_track = data.fix.track;
     if (std::isfinite(data.fix.epd)) {

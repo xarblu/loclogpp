@@ -6,12 +6,41 @@
 #include <optional>
 #include <string>
 #include <chrono>
+#include <expected>
 
 namespace LocLogPP {
 
 class ArgParser;
 
 class Point {
+public:
+    enum class ParseError {
+        // mode unset or below MODE_2D
+        BAD_FIX,
+
+        // used satellite count below limit
+        BAD_SATELLITES,
+
+        // time unset
+        BAD_TIMESTAMP,
+
+        // any of lat, lon, xdop, ydop, epx or epy unset
+        BAD_2D,
+
+        // speed or eps unset
+        BAD_SPEED,
+
+        // altitude below limit
+        BAD_ALTITUDE,
+
+        // accuracy (eph) below limit
+        BAD_ACCURACY,
+
+        // track unset
+        BAD_TRACK,
+    };
+
+private:
     // exported values
     std::chrono::system_clock::time_point m_timestamp{};
     double m_latitude;
@@ -65,7 +94,7 @@ public:
      *
      * Returns nullopt if not all required values were available
      */
-    static std::optional<Point> fromGPSD(gps_data_t &point, ArgParser *args);
+    static std::expected<Point, ParseError> fromGPSD(gps_data_t &point, ArgParser *args);
 
     /**
      * Parse from a row of our SQL points table
