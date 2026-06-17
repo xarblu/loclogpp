@@ -39,7 +39,7 @@ class ArgParser {
     // https://www.marinepublic.com/blogs/training/649465-hdop-pdop-gdop-gps-accuracy-multipath-effects
     double m_maxHDOP{5.0};
     double m_maxVDOP{3.0};
-    std::chrono::seconds m_fixWarmup{5};
+    std::chrono::seconds m_fixWarmup{15};
 
     /**
      * Print help message
