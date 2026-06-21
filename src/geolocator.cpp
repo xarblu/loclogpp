@@ -62,7 +62,6 @@ std::unique_ptr<LocLogPP::Geolocator> LocLogPP::Geolocator::create(std::shared_p
     if (!points.empty()) {
         Logger::info("Last point:\n{}", points.back().toString());
         geolocator->m_lastPoint = points.back();
-        geolocator->m_pastPoints.push_back(points.back());
     }
 
     geolocator->m_EMAFilters = {
@@ -77,8 +76,8 @@ std::optional<LocLogPP::Point> LocLogPP::Geolocator::preFilterPoint(Point point)
     Logger::debug("Applying point pre-filter");
 
     // filter excessive jumps
-    if (!m_pastPoints.empty()) {
-        const auto &lastPoint = m_pastPoints.back();
+    if (m_lastPoint) {
+        const auto &lastPoint = *m_lastPoint;
 
         const double distance = lastPoint.distance(point);
 
@@ -184,60 +183,6 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
             point.setAltitude(m_kalmanFilters.alt->update(measurementAlt));
         }
     }
-}
-
-std::optional<LocLogPP::Point> LocLogPP::Geolocator::pastPointsCenter() const {
-    if (m_pastPoints.empty()) {
-        return std::nullopt;
-    }
-
-    double latSum{0.0};
-    double lonSum{0.0};
-    double speedSum{0.0};
-
-    double accSum{0.0};
-    int accCount{0};
-
-    double altSum{0.0};
-    int altCount{0};
-
-    for (const auto &point : m_pastPoints) {
-        latSum += point.latitude();
-        lonSum += point.longitude();
-        speedSum += point.speed();
-
-        if (const auto &acc = point.accuracy()) {
-            accSum += acc.value();
-            accCount += 1;
-        }
-
-        if (const auto &alt = point.altitude()) {
-            altSum += alt.value();
-            altCount += 1;
-        }
-    }
-
-    const double latMean{latSum / m_pastPoints.size()};
-    const double lonMean{lonSum / m_pastPoints.size()};
-    double speedMean{speedSum / m_pastPoints.size()};
-
-    std::optional<double> accMean{};
-    if (accCount > 0) {
-        accMean = accSum / accCount;
-    }
-
-    std::optional<double> altMean{};
-    if (altCount > 0) {
-        altMean = altSum / altCount;
-    }
-
-    // XXX: does it make sense to use last points timestamp?
-    return Point{m_pastPoints.back().timestamp(),
-                 latMean,
-                 lonMean,
-                 speedMean,
-                 accMean,
-                 altMean};
 }
 
 void LocLogPP::Geolocator::updateStationaryDetection(const Point &point) {

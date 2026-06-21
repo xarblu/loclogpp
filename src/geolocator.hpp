@@ -43,11 +43,6 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> m_lastPointTime{};
 
     /**
-     * Past received points used to determine stationary/moving state
-     */
-    std::deque<Point> m_pastPoints{};
-
-    /**
      * Kalman filters for lat, lon, alt
      *
      * lazily initialized and seeded by the received point
@@ -131,14 +126,6 @@ private:
      * Apply the Kalman filters for lat, lon, alt on the given Point
      */
     void applyKalmanFilters(Point &point);
-
-    /**
-     * Get center of m_pastPoints, the Point timestamp
-     * will be copied from the last added point
-     *
-     * Returns nullopt if m_pastPoints does not contain any points
-     */
-    std::optional<Point> pastPointsCenter() const;
 
     /**
      * Update the stationary detection
