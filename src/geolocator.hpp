@@ -2,6 +2,7 @@
 
 #include "argparser.hpp"
 #include "kalmanfilter.hpp"
+#include "emafilter.hpp"
 #include "point.hpp"
 
 #include <libgpsmm.h>
@@ -55,12 +56,15 @@ private:
         std::unique_ptr<KalmanFilter> lat{nullptr};
         std::unique_ptr<KalmanFilter> lon{nullptr};
         std::unique_ptr<KalmanFilter> alt{nullptr};
-    } m_filters;
+    } m_kalmanFilters;
 
     /**
-     * Last smoothed Point for EMA filter
+     * Pre and post process EMA filters
      */
-    std::optional<Point> m_lastSmoothedPoint{std::nullopt};
+    struct {
+        std::unique_ptr<EMAFilter> pre{nullptr};
+        std::unique_ptr<EMAFilter> post{nullptr};
+    } m_EMAFilters;
 
     /**
      * Things for stationary detection
@@ -127,11 +131,6 @@ private:
      * Apply the Kalman filters for lat, lon, alt on the given Point
      */
     void applyKalmanFilters(Point &point);
-
-    /**
-     * Apply Exponential Moving Average smoothing filter on the given Point
-     */
-    void applyEMAFilter(Point &point);
 
     /**
      * Get center of m_pastPoints, the Point timestamp

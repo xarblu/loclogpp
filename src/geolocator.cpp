@@ -2,6 +2,7 @@
 
 #include "argparser.hpp"
 #include "database.hpp"
+#include "emafilter.hpp"
 #include "logger.hpp"
 #include "point.hpp"
 #include "kalmanfilter.hpp"
@@ -63,6 +64,11 @@ std::unique_ptr<LocLogPP::Geolocator> LocLogPP::Geolocator::create(std::shared_p
         geolocator->m_lastPoint = points.back();
         geolocator->m_pastPoints.push_back(points.back());
     }
+
+    geolocator->m_EMAFilters = {
+        .pre = std::make_unique<EMAFilter>(geolocator->m_stationaryDetection.stopSpeedThreshold),
+        .post = std::make_unique<EMAFilter>(geolocator->m_stationaryDetection.stopSpeedThreshold),
+    };
 
     return geolocator;
 }
@@ -140,10 +146,10 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
         .speed = speedLat,
         .speedError = speedErrorLatLon,
     };
-    if (!m_filters.lat) {
-        m_filters.lat = std::make_unique<KalmanFilter>(measurementLat);
+    if (!m_kalmanFilters.lat) {
+        m_kalmanFilters.lat = std::make_unique<KalmanFilter>(measurementLat);
     } else {
-        point.setLatitude(m_filters.lat->update(measurementLat));
+        point.setLatitude(m_kalmanFilters.lat->update(measurementLat));
     }
 
     // longitude
@@ -154,10 +160,10 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
         .speed = speedLon,
         .speedError = speedErrorLatLon,
     };
-    if (!m_filters.lon) {
-        m_filters.lon = std::make_unique<KalmanFilter>(measurementLon);
+    if (!m_kalmanFilters.lon) {
+        m_kalmanFilters.lon = std::make_unique<KalmanFilter>(measurementLon);
     } else {
-        point.setLongitude(m_filters.lon->update(measurementLon));
+        point.setLongitude(m_kalmanFilters.lon->update(measurementLon));
     }
 
     // altitude (optional)
@@ -171,60 +177,13 @@ void LocLogPP::Geolocator::applyKalmanFilters(Point &point) {
             .speed = speedAlt,
             .speedError = speedErrorAlt,
         };
-        if (!m_filters.alt) {
+        if (!m_kalmanFilters.alt) {
             // KalmanFilter defaults assume degrees, altitude values are plain meters
-            m_filters.alt = std::make_unique<KalmanFilter>(measurementAlt, 0.1, 3);
+            m_kalmanFilters.alt = std::make_unique<KalmanFilter>(measurementAlt, 0.1, 3);
         } else {
-            point.setAltitude(m_filters.alt->update(measurementAlt));
+            point.setAltitude(m_kalmanFilters.alt->update(measurementAlt));
         }
     }
-}
-
-void LocLogPP::Geolocator::applyEMAFilter(Point &point) {
-    // init
-    if (!m_lastSmoothedPoint) {
-        m_lastSmoothedPoint = point;
-        return;
-    }
-
-    // average speed between this and last point to avoid jitter
-    const double speed{(point.speed() + m_lastSmoothedPoint->speed()) / 2.0};
-
-    // dynamic alpha based on speed
-    // lower speed means higher smoothing
-    double alpha{1.0};
-
-    const double &stopSpeed = m_stationaryDetection.stopSpeedThreshold;
-    if (speed < stopSpeed) {
-        // heavy smoothing while stationary
-        alpha = 0.25;
-    } else if (speed < 4.0) {
-        // linear increase up to 4 m/s (~15 km/h)
-        // low speeds have higher smoothing
-        alpha = 0.25 + (0.75 * ((speed - stopSpeed) / (4.0 - stopSpeed)));
-    } else {
-        // no smoothing for anything faster
-        // because points should be far enough apart
-        alpha = 1.0;
-    }
-
-    // apply EMA to lat, lon and speed
-    point.setLatitude((alpha * point.latitude()) + ((1.0 - alpha) * m_lastSmoothedPoint->latitude()));
-    point.setLongitude((alpha * point.longitude()) + ((1.0 - alpha) * m_lastSmoothedPoint->longitude()));
-    point.setSpeed((alpha * point.speed()) + ((1.0 - alpha) * m_lastSmoothedPoint->speed()));
-
-    // alt is optional and not on every Point
-    // only smooth when both points have a value
-    // if we have an altitude but the new point doesn't
-    // "smooth" it by just copying to work around temporary loss
-    // of 3D fix
-    if (point.altitude() && m_lastSmoothedPoint->altitude()) {
-        point.setAltitude((alpha * *point.altitude()) + ((1.0 - alpha) * *m_lastSmoothedPoint->altitude()));
-    } else if (!point.altitude() && m_lastSmoothedPoint->altitude()) {
-        point.setAltitude(*m_lastSmoothedPoint->altitude());
-    }
-
-    m_lastSmoothedPoint = point;
 }
 
 std::optional<LocLogPP::Point> LocLogPP::Geolocator::pastPointsCenter() const {
@@ -453,7 +412,7 @@ int LocLogPP::Geolocator::trackInternal() {
 
         // then throw them to our speed-dependant EMA
         // for track line smoothing
-        applyEMAFilter(*point);
+        m_EMAFilters.pre->apply(*point);
 
         Logger::debug("Point after EMAFilter:\n{}", point->toString());
 
@@ -492,6 +451,11 @@ int LocLogPP::Geolocator::trackInternal() {
                 continue;
             }
         }
+    
+        // and smooth once more - this time
+        // only affected by points actually
+        // reaching the DB
+        m_EMAFilters.pre->apply(*point);
 
         Logger::info("Got point:\n{}", point->toString());
         m_lastPoint = point;

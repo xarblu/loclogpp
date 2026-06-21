@@ -1,6 +1,7 @@
 add_executable(${PROJECT_NAME}
     argparser.cpp
     database.cpp
+    emafilter.cpp
     exporter.cpp
     geolocator.cpp
     kalmanfilter.cpp
