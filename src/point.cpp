@@ -256,21 +256,21 @@ std::string LocLogPP::Point::toString() const {
 
 std::string LocLogPP::Point::toSQL() const {
     std::string sqlPoint{"(NULL,"};
-    sqlPoint += std::format(" {},", std::chrono::duration_cast<std::chrono::seconds>(m_timestamp.time_since_epoch()).count());
-    sqlPoint += std::format(" {},", m_latitude);
-    sqlPoint += std::format(" {},", m_longitude);
+    sqlPoint += std::format(" {:d},", std::chrono::duration_cast<std::chrono::seconds>(m_timestamp.time_since_epoch()).count());
+    sqlPoint += std::format(" {:.12f},", m_latitude);
+    sqlPoint += std::format(" {:.12f},", m_longitude);
     if (m_speed) {
-        sqlPoint += std::format(" {},", m_speed);
+        sqlPoint += std::format(" {:.12f},", m_speed);
     } else {
         sqlPoint += std::format(" NULL,");
     }
     if (m_accuracy) {
-        sqlPoint += std::format(" {},", m_accuracy.value());
+        sqlPoint += std::format(" {:.12f},", m_accuracy.value());
     } else {
         sqlPoint += std::format(" NULL,");
     }
     if (m_altitude) {
-        sqlPoint += std::format(" {},", m_altitude.value());
+        sqlPoint += std::format(" {:.12f},", m_altitude.value());
     } else {
         sqlPoint += std::format(" NULL,");
     }
